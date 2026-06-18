@@ -19,10 +19,6 @@ export default function ChatPage() {
       <main className="flex-1 flex flex-col min-h-0 lg:overflow-hidden">
         <GlobalChat apiBaseUrl={API_BASE_URL} />
       </main>
-      <footer className="w-full bg-[var(--background-alt)] border-t border-[var(--border-light)] py-5 text-center text-[10px] font-semibold text-[var(--text-muted)] uppercase tracking-[0.2em] mt-auto">
-        &copy; {new Date().getFullYear()} The Daily Intelligence &bull; Powered
-        by LangChain &amp; LangGraph RAG
-      </footer>
     </div>
   );
 }
