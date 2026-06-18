@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "../components/Navbar";
 import Masthead from "../components/Masthead";
@@ -19,10 +19,10 @@ export default function Home() {
   const [ingesting, setIngesting] = useState(false);
   const [ingestStatus, setIngestStatus] = useState<string | null>(null);
 
-  const fetchClusters = async () => {
+  const fetchClusters = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/clusters`);
+      const res = await fetch(`${API_BASE_URL}/api/clusters?date=${editionDate}`);
       if (!res.ok) throw new Error("Failed to fetch stories");
       const data = await res.json();
       setClusters(data);
@@ -32,7 +32,7 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [editionDate]);
 
   useEffect(() => {
     fetchClusters();
@@ -40,7 +40,7 @@ export default function Home() {
     // Auto-refresh the edition content from the backend every 30 seconds
     const interval = setInterval(() => {
       // Avoid loading state overlay flash during auto-refresh
-      fetch(`${API_BASE_URL}/api/clusters`)
+      fetch(`${API_BASE_URL}/api/clusters?date=${editionDate}`)
         .then((res) => {
           if (res.ok) return res.json();
           throw new Error("Polling failed");
@@ -50,7 +50,7 @@ export default function Home() {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [editionDate]);
+  }, [editionDate, fetchClusters]);
 
   const handleIngest = async () => {
     setIngesting(true);
@@ -108,6 +108,7 @@ export default function Home() {
           clusters={clusters}
           onSelectCluster={(id) => router.push(`/chat/${id}`)}
           loading={loading}
+          onResetDate={() => setEditionDate(new Date().toISOString().split("T")[0])}
         />
       </main>
 

@@ -14,19 +14,34 @@ router = APIRouter()
 
 
 @router.get("/api/clusters", response_model=List[ClusterResponse])
-def get_clusters():
-    """Retrieve all active clusters from the last 48 hours, sorted by score."""
+def get_clusters(date: str = None):
+    """Retrieve active clusters. If date is provided (YYYY-MM-DD), retrieve clusters updated on that date. Otherwise, retrieve active clusters from the last 48 hours, sorted by score."""
     conn = get_db_connection()
     clusters_dict: dict = {}
     try:
         with conn.cursor() as cur:
-            cur.execute("""
-                SELECT id, headline, synthesized_summary, category, score,
-                       size_tier, outlet_count, first_seen_at, last_updated_at
-                FROM clusters
-                WHERE last_updated_at > NOW() - INTERVAL '48 hours'
-                ORDER BY score DESC;
-            """)
+            if date:
+                try:
+                    import datetime
+                    datetime.date.fromisoformat(date)
+                except ValueError:
+                    raise HTTPException(status_code=400, detail="Invalid date format. Expected YYYY-MM-DD.")
+                
+                cur.execute("""
+                    SELECT id, headline, synthesized_summary, category, score,
+                           size_tier, outlet_count, first_seen_at, last_updated_at
+                    FROM clusters
+                    WHERE last_updated_at::date = %s
+                    ORDER BY score DESC;
+                """, (date,))
+            else:
+                cur.execute("""
+                    SELECT id, headline, synthesized_summary, category, score,
+                           size_tier, outlet_count, first_seen_at, last_updated_at
+                    FROM clusters
+                    WHERE last_updated_at > NOW() - INTERVAL '48 hours'
+                    ORDER BY score DESC;
+                """)
             clusters_raw = cur.fetchall()
 
             if not clusters_raw:

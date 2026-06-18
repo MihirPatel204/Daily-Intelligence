@@ -27,6 +27,7 @@ interface NewspaperGridProps {
   clusters: Cluster[];
   onSelectCluster: (clusterId: number) => void;
   loading: boolean;
+  onResetDate?: () => void;
 }
 
 /* ─── Category badge colors ─── */
@@ -76,7 +77,7 @@ function getBentoClasses(index: number, sizeTier: string) {
   };
 }
 
-export default function NewspaperGrid({ clusters, onSelectCluster, loading }: NewspaperGridProps) {
+export default function NewspaperGrid({ clusters, onSelectCluster, loading, onResetDate }: NewspaperGridProps) {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-6 mt-8 pb-20">
@@ -104,6 +105,17 @@ export default function NewspaperGrid({ clusters, onSelectCluster, loading }: Ne
         <p className="text-[var(--text-secondary)] max-w-md mx-auto mb-6 text-sm leading-relaxed">
           No news clusters have been generated for this date yet.
         </p>
+        {onResetDate && (
+          <button
+            onClick={onResetDate}
+            className="inline-flex items-center gap-2 bg-[var(--foreground)] text-white hover:bg-[var(--accent)] px-4 py-2.5 rounded-[var(--radius-sm)] font-bold text-xs uppercase tracking-wider transition-all shadow-[var(--shadow-sm)] duration-200"
+          >
+            <svg className="w-3.5 h-3.5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Go to Today
+          </button>
+        )}
       </div>
     );
   }
