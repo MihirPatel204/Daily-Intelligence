@@ -102,8 +102,7 @@ export default function NewspaperGrid({ clusters, onSelectCluster, loading }: Ne
           The Printing Press is Quiet
         </h2>
         <p className="text-[var(--text-secondary)] max-w-md mx-auto mb-6 text-sm leading-relaxed">
-          No news clusters have been generated for this date yet. Try triggering
-          the ingestion pipeline or select a different edition date.
+          No news clusters have been generated for this date yet.
         </p>
       </div>
     );

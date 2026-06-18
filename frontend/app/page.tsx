@@ -94,39 +94,6 @@ export default function Home() {
           onPrint={handlePrint}
         />
 
-        {/* Empty-state welcome banner */}
-        {!loading && clusters.length === 0 && (
-          <div className="max-w-3xl mx-auto w-full px-6 mt-10 animate-fade-in-up">
-            <div className="bg-white border border-[var(--border)] p-8 text-center shadow-[var(--shadow-sm)] rounded-[var(--radius)]">
-              <div className="w-14 h-14 mx-auto mb-4 bg-[var(--background-alt)] border border-[var(--border-light)] rounded-full flex items-center justify-center">
-                <svg className="w-7 h-7 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1M19 20a2 2 0 002-2V8a2 2 0 00-2-2h-5M19 20l-7-7" />
-                </svg>
-              </div>
-              <h3 className="font-serif font-bold text-xl mb-2 text-[var(--foreground)]">
-                Welcome to the Editorial Office
-              </h3>
-              <p className="text-sm text-[var(--text-secondary)] max-w-md mx-auto mb-5 leading-relaxed">
-                The database is empty. Click below to poll live RSS feeds,
-                run the clustering engine, and generate AI-synthesized stories.
-              </p>
-              <button
-                id="ingest-trigger"
-                onClick={handleIngest}
-                disabled={ingesting}
-                className="bg-[var(--foreground)] hover:bg-[#3f3a36] disabled:opacity-50 text-white text-xs font-bold uppercase tracking-wider px-6 py-2.5 rounded-[var(--radius-sm)] transition-all cursor-pointer"
-              >
-                {ingesting ? "Running Ingestion…" : "Initialize & Ingest News Feeds"}
-              </button>
-              {ingestStatus && (
-                <p className="text-xs font-semibold text-[var(--accent)] mt-4 animate-pulse">
-                  {ingestStatus}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Background refresh banner */}
         {ingesting && clusters.length > 0 && (
           <div className="max-w-7xl mx-auto w-full px-6 mt-4">
