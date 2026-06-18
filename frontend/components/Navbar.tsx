@@ -16,21 +16,16 @@ export default function Navbar({ dateStr }: NavbarProps) {
     <header className="w-full bg-white/80 backdrop-blur-sm border-b border-[var(--border-light)] sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
         {/* Brand */}
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-[var(--foreground)] text-white flex items-center justify-center rounded-[var(--radius-sm)] shadow-[var(--shadow-xs)]">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </div>
+        <Link href="/" className="hover:opacity-95 transition-opacity">
           <div>
-            <span className="font-serif font-extrabold text-lg tracking-tight text-[var(--foreground)]">
-              NewsRAG
+            <span className="font-serif font-extrabold text-sm sm:text-base tracking-wider text-[var(--foreground)] uppercase block leading-tight">
+              Daily Intelligence
             </span>
-            <p className="text-[9px] uppercase tracking-[0.2em] text-[var(--text-muted)] font-semibold leading-tight">
-              AI Editorial Intelligence
+            <p className="text-[8px] uppercase tracking-[0.22em] text-[var(--text-muted)] font-extrabold leading-tight mt-0.5">
+              Editorial Board &bull; AI Aggregator
             </p>
           </div>
-        </div>
+        </Link>
 
         {/* Navigation Tabs */}
         <nav id="main-nav" className="flex items-center gap-0.5 bg-[var(--background-alt)] p-1 rounded-[var(--radius)] border border-[var(--border-light)]">
