@@ -14,6 +14,7 @@ from typing import AsyncGenerator, Optional
 
 from app.rag.graph import get_rag_graph
 from app.services.chat_history_service import save_message
+from app.services.llm_service import clean_llm_content
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +66,8 @@ async def stream_rag_response(
             # ---- token-level streaming from the LLM ----
             if kind == "on_chat_model_stream":
                 chunk = event["data"]["chunk"]
-                content = getattr(chunk, "content", "")
+                content_raw = getattr(chunk, "content", "")
+                content = clean_llm_content(content_raw)
                 if content:
                     has_streamed = True
                     yield f"data: {json.dumps({'type': 'token', 'content': content})}\n\n"

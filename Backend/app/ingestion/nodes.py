@@ -26,7 +26,7 @@ from langchain_core.messages import HumanMessage
 from app.config import settings
 from app.db import get_db_connection, return_db_connection
 from app.services.embedding_service import get_embeddings
-from app.services.llm_service import get_llm
+from app.services.llm_service import get_llm, clean_llm_content
 from app.ingestion.state import IngestionState, ArticleData, ClusterData
 
 logger = logging.getLogger(__name__)
@@ -493,7 +493,7 @@ def _verify_cluster_match(
                 "Output exactly one word (YES or NO)."
             )
             response = llm.invoke([HumanMessage(content=prompt)])
-            answer = response.content.strip().upper()
+            answer = clean_llm_content(response.content).strip().upper()
             logger.info(
                 f"LLM cluster verify (attempt {attempt + 1}): "
                 f"'{title1[:40]}' vs '{title2[:40]}': {answer}"
@@ -851,7 +851,7 @@ def critique_node(state: IngestionState) -> dict:
 
                 try:
                     response = llm.invoke([HumanMessage(content=prompt)])
-                    answer = response.content.strip()
+                    answer = clean_llm_content(response.content).strip()
 
                     if "PASS" not in answer.upper():
                         logger.warning(

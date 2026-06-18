@@ -17,7 +17,7 @@ from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from app.config import settings
 from app.db import get_db_connection, return_db_connection
 from app.services.embedding_service import get_embeddings
-from app.services.llm_service import get_llm
+from app.services.llm_service import get_llm, clean_llm_content
 from app.rag.state import RAGState
 
 logger = logging.getLogger(__name__)
@@ -251,14 +251,7 @@ async def generate_node(state: RAGState) -> dict:
     # ----- stream LLM response --------------------------------------------------
     full_content = ""
     async for chunk in llm.astream(prompt_messages):
-        # Gemeni can return parts as a list sometimes through LangChain, handle it safely
-        content = chunk.content
-        if isinstance(content, list):
-            content = "".join([str(c) for c in content if c])
-        elif not isinstance(content, str):
-            content = str(content) if content else ""
-            
-        full_content += content
+        full_content += clean_llm_content(chunk.content)
 
     # ----- build citations ------------------------------------------------------
     citations = [

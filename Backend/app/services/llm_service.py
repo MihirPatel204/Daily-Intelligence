@@ -28,3 +28,39 @@ def get_llm() -> ChatGoogleGenerativeAI:
         )
         logger.info(f"LLM initialized: {settings.gemini_model}")
     return _llm_instance
+
+
+def clean_llm_content(content) -> str:
+    """
+    Extract a string representation of the content from an LLM chunk/message content.
+    Handles content that may be a string, a list of dicts/strings, a dict, or other formats.
+    """
+    if not content:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for part in content:
+            if isinstance(part, str):
+                parts.append(part)
+            elif isinstance(part, dict):
+                if "text" in part:
+                    parts.append(part["text"])
+                elif "content" in part:
+                    parts.append(part["content"])
+            elif hasattr(part, "text"):
+                parts.append(part.text)
+            elif hasattr(part, "content"):
+                parts.append(part.content)
+            else:
+                parts.append(str(part))
+        return "".join(parts)
+    if isinstance(content, dict):
+        if "text" in content:
+            return content["text"]
+        if "content" in content:
+            return content["content"]
+        return str(content)
+    return str(content)
+
