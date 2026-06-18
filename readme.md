@@ -35,6 +35,7 @@ graph TD
     %% Ingestion Pipeline
     RSS[Curated RSS Feeds] -->|Poll| Ingest[LangGraph Ingestion Worker]
     Ingest -->|Embeddings| GeminiEmbed[Gemini embedding-2]
+    GeminiEmbed -->|Store| DB[(PostgreSQL + pgvector)]
     Ingest -->|Deduplication & Clustering| DB[(PostgreSQL + pgvector)]
     Ingest -->|Verify & Summarize| LLM[Gemini 3.1 Flash Lite]
     LLM -->|Save Summaries & Scores| DB
