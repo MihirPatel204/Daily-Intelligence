@@ -1,0 +1,25 @@
+# Web framework
+fastapi>=0.115
+uvicorn>=0.32
+
+# Database
+psycopg2-binary>=2.9
+pgvector>=0.3
+
+# Data validation & settings
+pydantic>=2.10
+pydantic-settings>=2.7
+python-dotenv>=1.0
+
+# Numerical
+numpy>=1.26
+
+# RSS parsing
+feedparser>=6.0
+
+# LangChain ecosystem
+langchain>=0.3
+langchain-core>=0.3
+langchain-google-genai>=2.1
+langgraph>=0.4
+
