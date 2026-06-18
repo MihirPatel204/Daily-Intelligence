@@ -223,7 +223,7 @@ export default function StoryChatPage() {
           {/* Dynamic 2-Column Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 flex-1 min-h-0 items-stretch lg:overflow-hidden">
             {/* Left Column: Context Briefing (1/4 width) */}
-            <div className="lg:col-span-1 flex flex-col gap-5 min-h-0 lg:overflow-hidden">
+            <div className="lg:col-span-1 flex flex-col gap-5 min-h-0 lg:overflow-y-auto pr-1">
               <div className="bg-white border border-[var(--border-light)] p-5 rounded-xl shadow-[var(--shadow-xs)] flex flex-col gap-4">
                 <span className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider block border-b border-[var(--border-light)] pb-2">
                   Story Briefing
@@ -240,11 +240,11 @@ export default function StoryChatPage() {
               </div>
 
               {/* Coverage Links */}
-              <div className="bg-white border border-[var(--border-light)] p-5 rounded-xl shadow-[var(--shadow-xs)] flex flex-col gap-3 min-h-[200px] lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+              <div className="bg-white border border-[var(--border-light)] p-5 rounded-xl shadow-[var(--shadow-xs)] flex flex-col gap-3">
                 <span className="text-[10px] font-extrabold text-[var(--text-muted)] uppercase tracking-wider block border-b border-[var(--border-light)] pb-2">
                   Contributing Coverage ({cluster?.articles.length})
                 </span>
-                <div className="flex flex-col gap-2 overflow-y-auto max-h-[35vh] lg:max-h-none lg:flex-1 pr-1">
+                <div className="flex flex-col gap-2 pr-1">
                   {cluster?.articles.map((art) => (
                     <a
                       key={art.id}

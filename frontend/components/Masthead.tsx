@@ -40,12 +40,7 @@ export default function Masthead({ editionDate, setEditionDate, onPrint }: Masth
 
       {/* Issue Details Bar */}
       <div className="border-double-custom py-2.5 flex flex-col md:flex-row items-center justify-between text-[11px] font-semibold tracking-wider text-[var(--text-secondary)] uppercase gap-3">
-        <span>VOL. I &bull; NO. III &bull; Morning Edition</span>
-
-        <span className="font-serif italic font-semibold text-[var(--foreground)] text-xs tracking-normal normal-case">
-          {formatLongDate(editionDate)}
-        </span>
-
+        <span>PUBLISHED DAILY &bull; WORLDWIDE</span>
         <div className="flex items-center gap-3">
           {/* Edition date picker */}
           <div className="flex items-center gap-1.5 bg-[var(--background-alt)] px-2.5 py-1 rounded-[var(--radius-sm)] border border-[var(--border-light)]">
