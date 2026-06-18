@@ -77,12 +77,12 @@ function getBentoClasses(index: number, sizeTier: string) {
 }
 
 export default function NewspaperGrid({ clusters, onSelectCluster, loading }: NewspaperGridProps) {
-  if (loading) {
+  if (true) {
     return (
       <div className="max-w-7xl mx-auto px-6 mt-8 pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="space-y-3 p-5 bg-white border border-[var(--border-light)] rounded-[var(--radius)]">
+            <div key={i} className="w-80 space-y-3 p-5 bg-white border border-[var(--border-light)] rounded-[var(--radius)]">
               <div className="skeleton h-4 w-20" />
               <div className="skeleton h-5 w-full" />
               <div className="skeleton h-4 w-full" />

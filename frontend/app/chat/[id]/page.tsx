@@ -70,7 +70,7 @@ export default function StoryChatPage() {
   }, [id]);
 
   return (
-    <div className="flex flex-col min-h-screen lg:h-screen lg:overflow-hidden bg-[var(--background)]">
+    <div className="flex flex-col min-h-dvh lg:h-dvh lg:overflow-hidden bg-[var(--background)]">
       {/* Navigation Header */}
       <Navbar
         dateStr={new Date().toLocaleDateString("en-US", {
@@ -88,7 +88,7 @@ export default function StoryChatPage() {
           </p>
         </main>
       ) : (
-        <main className="flex-1 max-w-7xl mx-auto w-full px-6 py-6 flex flex-col gap-6 min-h-0 lg:overflow-hidden">
+        <main className="flex-1 max-w-7xl mx-auto w-full px-6 pt-6 pb-0 lg:py-6 flex flex-col gap-6 min-h-0 lg:overflow-hidden">
           {/* Back Button & Top Summary Header */}
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-[var(--border)] pb-4 gap-4">
             <div className="flex items-center gap-3">
@@ -173,7 +173,7 @@ export default function StoryChatPage() {
             </div>
 
             {/* Right Column: Chat workspace (3/4 width) */}
-            <div className="lg:col-span-3 flex flex-col bg-transparent rounded-xl flex-grow h-[70vh] lg:h-full min-h-0 lg:overflow-hidden">
+            <div className="lg:col-span-3 flex flex-col bg-transparent rounded-xl flex-grow h-[70dvh] lg:h-full min-h-0 lg:overflow-hidden">
               <ChatInterface
                 apiUrl={`${API_BASE_URL}/api/clusters/${id}/chat`}
                 sessionId={sessionIdRef.current}

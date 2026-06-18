@@ -694,7 +694,7 @@ def summarize_node(state: IngestionState) -> dict:
                 "Tasks:\n"
                 "1. Create a compelling, professional, neutral unified headline "
                 "(do not use clickbait).\n"
-                "2. Write a cohesive 2-to-3 sentence summary citing which outlet "
+                "2. Write a cohesive 4-to-5 sentence summary citing which outlet "
                 "reported what key details (e.g., 'BBC reports… while NDTV adds…'). "
                 "Maintain an objective tone.\n\n"
                 f"Articles:\n{articles_context}"
