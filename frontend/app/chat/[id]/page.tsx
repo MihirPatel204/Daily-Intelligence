@@ -359,7 +359,7 @@ export default function StoryChatPage() {
                   }}
                   disabled={sending}
                   className="flex-1 bg-transparent border-0 text-[14px] text-[var(--foreground)] focus:ring-0 resize-none py-2.5 max-h-40 pr-12 focus:outline-none"
-                  style={{ fontFamily: "var(--font-body)", lineHeight: "1.5" }}
+                  style={{ fontFamily: "var(--font-body)", lineHeight: "1.5", border: "none", outline: "none", boxShadow: "none" }}
                 />
                 <button
                   type="submit"
@@ -367,7 +367,7 @@ export default function StoryChatPage() {
                   className="absolute right-3 bottom-3 bg-[var(--foreground)] hover:bg-[#3f3a36] disabled:opacity-30 disabled:hover:bg-[var(--foreground)] text-white w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-[var(--shadow-xs)]"
                 >
                   <svg
-                    className="w-4.5 h-4.5 transform rotate-90"
+                    className="w-4.5 h-4.5"
                     fill="currentColor"
                     viewBox="0 0 24 24"
                   >

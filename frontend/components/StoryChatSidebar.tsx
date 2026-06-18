@@ -334,14 +334,14 @@ export default function StoryChatSidebar({
                   }}
                   disabled={sending}
                   className="flex-1 bg-transparent border-0 text-sm text-[var(--foreground)] focus:ring-0 resize-none py-1.5 max-h-32 pr-10 focus:outline-none"
-                  style={{ fontFamily: "var(--font-body)", lineHeight: "1.4" }}
+                  style={{ fontFamily: "var(--font-body)", lineHeight: "1.4", border: "none", outline: "none", boxShadow: "none" }}
                 />
                 <button
                   type="submit"
                   disabled={sending || !input.trim()}
                   className="absolute right-2 bottom-2 bg-[var(--foreground)] hover:bg-[#3f3a36] disabled:opacity-30 disabled:hover:bg-[var(--foreground)] text-white w-7 h-7 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-[var(--shadow-xs)]"
                 >
-                  <svg className="w-3.5 h-3.5 transform rotate-90" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                   </svg>
                 </button>

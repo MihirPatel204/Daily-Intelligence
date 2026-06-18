@@ -451,6 +451,10 @@ def cluster_match_node(state: IngestionState) -> dict:
                     """,
                     (real_cid, art_id),
                 )
+                cur.execute(
+                    "UPDATE clusters SET last_updated_at = NOW() WHERE id = %s;",
+                    (real_cid,),
+                )
 
         conn.commit()
         logger.info(f"Clustering write transaction committed. {cluster_count} new clusters created.")
@@ -555,7 +559,7 @@ def score_node(state: IngestionState) -> dict:
                 cur.execute(
                     """
                     UPDATE clusters
-                    SET score = %s, outlet_count = %s, last_updated_at = NOW()
+                    SET score = %s, outlet_count = %s
                     WHERE id = %s;
                     """,
                     (score, outlet_count, cid),
@@ -618,6 +622,7 @@ def summarize_node(state: IngestionState) -> dict:
         llm = None
         logger.warning("LLM not available — using fallback summaries.")
 
+    active_clusters = []
     try:
         with conn.cursor() as cur:
             cur.execute("""
@@ -625,8 +630,24 @@ def summarize_node(state: IngestionState) -> dict:
                 WHERE last_updated_at > NOW() - INTERVAL '36 hours';
             """)
             active_clusters = cur.fetchall()
+        conn.commit()
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        error_msg = f"Error fetching active clusters: {e}"
+        logger.error(error_msg, exc_info=True)
+        errors.append(error_msg)
+        return_db_connection(conn)
+        return {
+            "synthesize_count": 0,
+            "critique_feedback": "",
+            "errors": errors,
+        }
 
-            for cid, headline, first_seen, category in active_clusters:
+    for cid, headline, first_seen, category in active_clusters:
+        articles = []
+        try:
+            with conn.cursor() as cur:
                 cur.execute("""
                     SELECT a.title, a.summary, s.name, a.published_at
                     FROM articles a
@@ -635,116 +656,127 @@ def summarize_node(state: IngestionState) -> dict:
                     ORDER BY a.published_at DESC;
                 """, (cid,))
                 articles = cur.fetchall()
+            conn.commit()
+        except Exception as read_err:
+            if conn:
+                conn.rollback()
+            logger.error(f"Error fetching articles for cluster {cid}: {read_err}")
+            continue
 
-                if not articles:
-                    continue
+        if not articles:
+            continue
 
-                # Default fallback
-                syn_headline = headline
-                syn_summary = articles[0][1] or articles[0][0]
+        # Default fallback
+        syn_headline = headline
+        syn_summary = articles[0][1] or articles[0][0]
 
-                if llm and articles:
-                    articles_context = ""
-                    for idx, (title, summary, s_name, pub_at) in enumerate(articles):
-                        articles_context += (
-                            f"Source {idx + 1}: {s_name}\n"
-                            f"Headline: {title}\n"
-                            f"Summary: {summary or 'N/A'}\n\n"
-                        )
+        if llm and articles:
+            articles_context = ""
+            for idx, (title, summary, s_name, pub_at) in enumerate(articles):
+                articles_context += (
+                    f"Source {idx + 1}: {s_name}\n"
+                    f"Headline: {title}\n"
+                    f"Summary: {summary or 'N/A'}\n\n"
+                )
 
-                    # Include critique feedback if this is a retry
-                    critique_feedback = state.get("critique_feedback", "")
-                    feedback_section = ""
-                    if critique_feedback and state.get("current_cluster_id") == cid:
-                        feedback_section = (
-                            f"\n\nPREVIOUS ATTEMPT FEEDBACK: {critique_feedback}\n"
-                            "Please address the feedback in your revised summary.\n"
-                        )
+            # Include critique feedback if this is a retry
+            critique_feedback = state.get("critique_feedback", "")
+            feedback_section = ""
+            if critique_feedback and state.get("current_cluster_id") == cid:
+                feedback_section = (
+                    f"\n\nPREVIOUS ATTEMPT FEEDBACK: {critique_feedback}\n"
+                    "Please address the feedback in your revised summary.\n"
+                )
 
-                    prompt = (
-                        "You are a professional newspaper editor. Synthesize a unified "
-                        "report from the following coverage of a single news event.\n"
-                        "Tasks:\n"
-                        "1. Create a compelling, professional, neutral unified headline "
-                        "(do not use clickbait).\n"
-                        "2. Write a cohesive 2-to-3 sentence summary citing which outlet "
-                        "reported what key details (e.g., 'BBC reports… while NDTV adds…'). "
-                        "Maintain an objective tone.\n\n"
-                        f"Articles:\n{articles_context}"
-                        f"{feedback_section}"
-                        "Respond ONLY with a valid JSON object containing 'headline' "
-                        "and 'summary' keys."
-                    )
+            prompt = (
+                "You are a professional newspaper editor. Synthesize a unified "
+                "report from the following coverage of a single news event.\n"
+                "Tasks:\n"
+                "1. Create a compelling, professional, neutral unified headline "
+                "(do not use clickbait).\n"
+                "2. Write a cohesive 2-to-3 sentence summary citing which outlet "
+                "reported what key details (e.g., 'BBC reports… while NDTV adds…'). "
+                "Maintain an objective tone.\n\n"
+                f"Articles:\n{articles_context}"
+                f"{feedback_section}"
+                "Respond ONLY with a valid JSON object containing 'headline' "
+                "and 'summary' keys."
+            )
 
-                    try:
-                        import time
-                        time.sleep(1.5)  # Sleep 1.5s to respect Gemini API 15 RPM limits
+            try:
+                import time
+                time.sleep(1.5)  # Sleep 1.5s to respect Gemini API 15 RPM limits
 
-                        from langchain_core.output_parsers import JsonOutputParser
-                        parser = JsonOutputParser(pydantic_object=ClusterSynthesis)
-                        
-                        format_instructions = parser.get_format_instructions()
-                        full_prompt = f"{prompt}\n\n{format_instructions}"
+                from langchain_core.output_parsers import JsonOutputParser
+                parser = JsonOutputParser(pydantic_object=ClusterSynthesis)
+                
+                format_instructions = parser.get_format_instructions()
+                full_prompt = f"{prompt}\n\n{format_instructions}"
 
-                        chain = llm | parser
-                        result = chain.invoke([HumanMessage(content=full_prompt)])
+                chain = llm | parser
+                result = chain.invoke([HumanMessage(content=full_prompt)])
 
-                        if result is None:
-                            raise ValueError("LLM returned None for structured output")
+                if result is None:
+                    raise ValueError("LLM returned None for structured output")
 
-                        syn_headline = result.get("headline", headline)
-                        syn_summary = result.get("summary")
-                        if not syn_summary:
-                            syn_summary = articles[0][1] or articles[0][0]
-                        synthesize_count += 1
-                    except Exception as e:
-                        logger.error(
-                            f"LLM synthesis failed for cluster {cid}: {e}. "
-                            "Using fallback."
-                        )
+                syn_headline = result.get("headline", headline)
+                syn_summary = result.get("summary")
+                if not syn_summary:
+                    syn_summary = articles[0][1] or articles[0][0]
+                synthesize_count += 1
+            except Exception as e:
+                logger.error(
+                    f"LLM synthesis failed for cluster {cid}: {e}. "
+                    "Using fallback."
+                )
 
-                # Generate summary embedding for cluster-level retrieval
-                try:
-                    embeddings_model = get_embeddings()
-                    summary_text = f"{syn_headline}. {syn_summary}"
-                    summary_embedding = embeddings_model.embed_query(summary_text)
+        # Generate summary embedding for cluster-level retrieval
+        summary_embedding = None
+        try:
+            embeddings_model = get_embeddings()
+            summary_text = f"{syn_headline}. {syn_summary}"
+            summary_embedding = embeddings_model.embed_query(summary_text)
+        except Exception as emb_err:
+            logger.error(
+                f"Failed to generate embedding for cluster summary {cid}: {emb_err}"
+            )
 
+        # Update cluster in database inside a short transaction
+        try:
+            with conn.cursor() as cur:
+                if summary_embedding is not None:
                     cur.execute(
                         """
                         UPDATE clusters
                         SET headline = %s, synthesized_summary = %s,
-                            summary_embedding = %s, last_updated_at = NOW()
+                            summary_embedding = %s
                         WHERE id = %s;
                         """,
                         (syn_headline, syn_summary, summary_embedding, cid),
                     )
-                except Exception as emb_err:
-                    logger.error(
-                        f"Failed to embed cluster summary {cid}: {emb_err}"
-                    )
+                else:
                     cur.execute(
                         """
                         UPDATE clusters
-                        SET headline = %s, synthesized_summary = %s,
-                            last_updated_at = NOW()
+                        SET headline = %s, synthesized_summary = %s
                         WHERE id = %s;
                         """,
                         (syn_headline, syn_summary, cid),
                     )
-
             conn.commit()
-            logger.info(
-                f"Synthesis complete. {synthesize_count} clusters summarized via LLM."
+            logger.info(f"Successfully synthesized and committed cluster {cid}")
+        except Exception as write_err:
+            if conn:
+                conn.rollback()
+            logger.error(
+                f"Failed to write synthesized summary/embedding for cluster {cid}: {write_err}"
             )
+            errors.append(f"Write failed for cluster {cid}: {write_err}")
 
-    except Exception as e:
-        if conn:
-            conn.rollback()
-        error_msg = f"Error during synthesis: {e}"
-        logger.error(error_msg, exc_info=True)
-        errors.append(error_msg)
-    finally:
-        return_db_connection(conn)
+    logger.info(
+        f"Synthesis complete. {synthesize_count} clusters summarized via LLM."
+    )
+    return_db_connection(conn)
 
     return {
         "synthesize_count": synthesize_count,
