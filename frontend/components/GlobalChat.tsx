@@ -24,7 +24,7 @@ export default function GlobalChat({ apiBaseUrl }: GlobalChatProps) {
         sessionId={sessionIdRef.current}
         placeholder="Ask about recent news…"
         suggestedPrompts={SUGGESTED_PROMPTS}
-        avatarLabel="DI"
+        avatarLabel="AD"
         roleLabel="AI DESK"
       />
     </div>
