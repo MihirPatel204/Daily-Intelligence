@@ -251,7 +251,14 @@ async def generate_node(state: RAGState) -> dict:
     # ----- stream LLM response --------------------------------------------------
     full_content = ""
     async for chunk in llm.astream(prompt_messages):
-        full_content += chunk.content or ""
+        # Gemeni can return parts as a list sometimes through LangChain, handle it safely
+        content = chunk.content
+        if isinstance(content, list):
+            content = "".join([str(c) for c in content if c])
+        elif not isinstance(content, str):
+            content = str(content) if content else ""
+            
+        full_content += content
 
     # ----- build citations ------------------------------------------------------
     citations = [
