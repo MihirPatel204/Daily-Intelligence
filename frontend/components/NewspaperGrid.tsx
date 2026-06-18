@@ -42,39 +42,34 @@ function getCategoryClass(cat: string): string {
   return CATEGORY_COLORS[cat] || "bg-[var(--background-alt)] text-[var(--foreground)] border-[var(--border-light)]";
 }
 
-function getBentoClasses(index: number, sizeTier: string) {
-  // Always make the first one the spotlight lead card
-  if (index === 0) {
-    return {
-      gridClass: "lg:col-span-2 lg:row-span-2 md:col-span-2 bg-white p-7 shadow-[var(--shadow-xs)]",
-      titleClass: "text-2xl sm:text-3xl md:text-[2rem] leading-tight font-black font-serif",
-      summaryClass: "text-[0.875rem] leading-relaxed",
-    };
+function getCardClasses(sizeTier: string) {
+  switch (sizeTier) {
+    case "lead":
+      return {
+        paddingClass: "p-6 md:p-7 shadow-[var(--shadow-xs)]",
+        titleClass: "text-xl sm:text-2xl md:text-3xl leading-tight font-black font-serif",
+        summaryClass: "text-[0.875rem] leading-relaxed",
+      };
+    case "major":
+      return {
+        paddingClass: "p-6 shadow-[var(--shadow-xs)]",
+        titleClass: "text-xl leading-tight font-bold font-serif",
+        summaryClass: "text-[0.8rem] leading-relaxed",
+      };
+    case "brief":
+      return {
+        paddingClass: "p-4 shadow-[var(--shadow-xs)]",
+        titleClass: "text-base leading-tight font-bold font-serif",
+        summaryClass: "text-[0.775rem] leading-relaxed",
+      };
+    case "standard":
+    default:
+      return {
+        paddingClass: "p-5 shadow-[var(--shadow-xs)]",
+        titleClass: "text-lg md:text-xl leading-tight font-bold font-serif",
+        summaryClass: "text-[0.8rem] leading-relaxed",
+      };
   }
-
-  // Alternate heights to create bento board depth
-  if (sizeTier === "major" || index === 3 || index === 7) {
-    return {
-      gridClass: "lg:col-span-1 lg:row-span-2 bg-white p-6",
-      titleClass: "text-xl md:text-2xl leading-tight font-bold font-serif",
-      summaryClass: "text-[0.8rem] leading-relaxed",
-    };
-  }
-
-  if (sizeTier === "lead" || index === 4) {
-    return {
-      gridClass: "lg:col-span-2 md:col-span-2 bg-white p-6 shadow-[var(--shadow-xs)]",
-      titleClass: "text-xl sm:text-2xl md:text-[1.6rem] leading-tight font-black font-serif",
-      summaryClass: "text-[0.85rem] leading-relaxed",
-    };
-  }
-
-  // Standard cards
-  return {
-    gridClass: "col-span-1 bg-white p-5 shadow-[var(--shadow-xs)]",
-    titleClass: "text-lg md:text-xl leading-tight font-bold font-serif",
-    summaryClass: "text-[0.8rem] leading-relaxed",
-  };
 }
 
 export default function NewspaperGrid({ clusters, onSelectCluster, loading, onResetDate }: NewspaperGridProps) {
@@ -133,6 +128,82 @@ export default function NewspaperGrid({ clusters, onSelectCluster, loading, onRe
     }
   };
 
+  const leadCluster = clusters[0];
+  const remainingClusters = clusters.slice(1);
+
+  const renderCard = (cluster: Cluster, index: number) => {
+    const { paddingClass, titleClass, summaryClass } = getCardClasses(cluster.size_tier);
+
+    return (
+      <div
+        key={cluster.id}
+        onClick={() => onSelectCluster(cluster.id)}
+        className={`
+          bg-white ${paddingClass} shadow-[var(--shadow-xs)]
+          border border-[var(--foreground)] hover:border-[var(--accent)]
+          hover:shadow-[var(--shadow-md)] transition-all duration-200
+          rounded-[var(--radius)] flex flex-col justify-between group
+          cursor-pointer h-fit w-full
+        `}
+        style={{ animationDelay: `${index * 40}ms` }}
+      >
+        <div>
+          {/* Card Header */}
+          <div className="flex items-center justify-between mb-3.5">
+            <span className={`text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-[var(--radius-sm)] border ${getCategoryClass(cluster.category)}`}>
+              {cluster.category}
+            </span>
+            <div className="flex items-center gap-1 text-[9px] font-extrabold text-[var(--accent-warm)] uppercase tracking-wider">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1M19 20a2 2 0 002-2V8a2 2 0 00-2-2h-5" />
+              </svg>
+              {cluster.outlet_count} sources
+            </div>
+          </div>
+
+          {/* Headline */}
+          <h4 className={`text-[var(--foreground)] group-hover:text-[var(--accent)] transition-colors duration-200 mb-3 ${titleClass}`}>
+            {cluster.headline}
+          </h4>
+
+          {/* Summary */}
+          <p className={`text-[var(--text-secondary)] mb-4 text-justify ${summaryClass}`} style={{ fontFamily: "var(--font-body)" }}>
+            {cluster.synthesized_summary}
+          </p>
+        </div>
+
+        {/* Card Footer */}
+        <div className="border-t border-[var(--border-light)] pt-3 flex flex-wrap items-center justify-between gap-2 text-[9px] font-bold uppercase text-[var(--text-muted)]">
+          <div className="flex flex-wrap gap-1 items-center max-w-[65%]">
+            <span className="mr-0.5 text-[8px]">SOURCES:</span>
+            {Array.from(new Set(cluster.articles.map((a) => a.source_name))).slice(0, 3).map((source, idx) => (
+              <span key={idx} className="bg-[var(--background-alt)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded-[2px] border border-[var(--border-light)] truncate max-w-[80px]">
+                {source}
+              </span>
+            ))}
+            {Array.from(new Set(cluster.articles.map((a) => a.source_name))).length > 3 && (
+              <span className="text-[8px] text-[var(--text-muted)]">
+                +{(new Set(cluster.articles.map((a) => a.source_name))).size - 3}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[var(--text-muted)]">
+              {formatTimeAgo(cluster.last_updated_at)}
+            </span>
+            <span className="text-[var(--border)]">|</span>
+            <span className="text-[var(--accent)] group-hover:text-[var(--accent-hover)] transition-colors flex items-center gap-0.5 font-extrabold tracking-wider">
+              DISCUSS
+              <svg className="w-2.5 h-2.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-6 mt-6 pb-20 animate-fade-in-up">
       {/* Board Title */}
@@ -150,80 +221,62 @@ export default function NewspaperGrid({ clusters, onSelectCluster, loading, onRe
         </span>
       </div>
 
-      {/* Bento Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-auto grid-flow-dense">
-        {clusters.map((cluster, index) => {
-          const { gridClass, titleClass, summaryClass } = getBentoClasses(index, cluster.size_tier);
-
-          return (
-            <div
-              key={cluster.id}
-              onClick={() => onSelectCluster(cluster.id)}
-              className={`
-                border border-[var(--foreground)] hover:border-[var(--accent)]
-                hover:shadow-[var(--shadow-md)] transition-all duration-200
-                rounded-[var(--radius)] flex flex-col justify-between group
-                cursor-pointer
-                ${gridClass}
-              `}
-              style={{ animationDelay: `${index * 40}ms` }}
-            >
-              <div>
-                {/* Card Header */}
-                <div className="flex items-center justify-between mb-3.5">
-                  <span className={`text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-[var(--radius-sm)] border ${getCategoryClass(cluster.category)}`}>
-                    {cluster.category}
-                  </span>
-                  <div className="flex items-center gap-1 text-[9px] font-extrabold text-[var(--accent-warm)] uppercase tracking-wider">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1M19 20a2 2 0 002-2V8a2 2 0 00-2-2h-5" />
-                    </svg>
-                    {cluster.outlet_count} sources
-                  </div>
-                </div>
-
-                {/* Headline */}
-                <h4 className={`text-[var(--foreground)] group-hover:text-[var(--accent)] transition-colors duration-200 mb-3 ${titleClass}`}>
-                  {cluster.headline}
-                </h4>
-
-                {/* Summary */}
-                <p className={`text-[var(--text-secondary)] mb-4 text-justify ${summaryClass}`} style={{ fontFamily: "var(--font-body)" }}>
-                  {cluster.synthesized_summary}
-                </p>
-              </div>
-
-              {/* Card Footer */}
-              <div className="border-t border-[var(--border-light)] pt-3 flex flex-wrap items-center justify-between gap-2 text-[9px] font-bold uppercase text-[var(--text-muted)]">
-                <div className="flex flex-wrap gap-1 items-center max-w-[65%]">
-                  <span className="mr-0.5 text-[8px]">SOURCES:</span>
-                  {Array.from(new Set(cluster.articles.map((a) => a.source_name))).slice(0, 3).map((source, idx) => (
-                    <span key={idx} className="bg-[var(--background-alt)] text-[var(--text-secondary)] px-1.5 py-0.5 rounded-[2px] border border-[var(--border-light)] truncate max-w-[80px]">
-                      {source}
-                    </span>
-                  ))}
-                  {Array.from(new Set(cluster.articles.map((a) => a.source_name))).length > 3 && (
-                    <span className="text-[8px] text-[var(--text-muted)]">
-                      +{(new Set(cluster.articles.map((a) => a.source_name))).size - 3}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[var(--text-muted)]">
-                    {formatTimeAgo(cluster.last_updated_at)}
-                  </span>
-                  <span className="text-[var(--border)]">|</span>
-                  <span className="text-[var(--accent)] group-hover:text-[var(--accent-hover)] transition-colors flex items-center gap-0.5 font-extrabold tracking-wider">
-                    DISCUSS
-                    <svg className="w-2.5 h-2.5 transform group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </span>
-                </div>
-              </div>
+      {/* Desktop Layout (3 columns total, built using nested flex columns to prevent row alignment gaps) */}
+      <div className="hidden lg:grid lg:grid-cols-3 gap-6 items-start">
+        {/* Left Section: Spans 2 columns width. Contains Lead card + 2 nested flex columns below it */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          {leadCluster && renderCard(leadCluster, 0)}
+          
+          <div className="grid grid-cols-2 gap-6 items-start">
+            <div className="flex flex-col gap-6">
+              {remainingClusters
+                .map((cluster, i) => ({ cluster, originalIndex: i + 1 }))
+                .filter(({ originalIndex }) => originalIndex % 3 === 1)
+                .map(({ cluster, originalIndex }) => renderCard(cluster, originalIndex))}
             </div>
-          );
-        })}
+            <div className="flex flex-col gap-6">
+              {remainingClusters
+                .map((cluster, i) => ({ cluster, originalIndex: i + 1 }))
+                .filter(({ originalIndex }) => originalIndex % 3 === 2)
+                .map(({ cluster, originalIndex }) => renderCard(cluster, originalIndex))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Section: Spans 1 column width. Runs all the way down, aligned at the top */}
+        <div className="lg:col-span-1 flex flex-col gap-6">
+          {remainingClusters
+            .map((cluster, i) => ({ cluster, originalIndex: i + 1 }))
+            .filter(({ originalIndex }) => originalIndex % 3 === 0)
+            .map(({ cluster, originalIndex }) => renderCard(cluster, originalIndex))}
+        </div>
+      </div>
+
+      {/* Tablet Layout (2 columns total, built using nested flex columns) */}
+      <div className="hidden md:grid lg:hidden md:grid-cols-2 gap-6 items-start">
+        <div className="md:col-span-2">
+          {leadCluster && renderCard(leadCluster, 0)}
+        </div>
+        <div className="flex flex-col gap-6">
+          {remainingClusters
+            .map((cluster, i) => ({ cluster, originalIndex: i + 1 }))
+            .filter(({ originalIndex }) => originalIndex % 2 === 1)
+            .map(({ cluster, originalIndex }) => renderCard(cluster, originalIndex))}
+        </div>
+        <div className="flex flex-col gap-6">
+          {remainingClusters
+            .map((cluster, i) => ({ cluster, originalIndex: i + 1 }))
+            .filter(({ originalIndex }) => originalIndex % 2 === 0)
+            .map(({ cluster, originalIndex }) => renderCard(cluster, originalIndex))}
+        </div>
+      </div>
+
+      {/* Mobile Layout (1 column total) */}
+      <div className="grid md:hidden grid-cols-1 gap-6">
+        {leadCluster && renderCard(leadCluster, 0)}
+        <div className="flex flex-col gap-6">
+          {remainingClusters.map((cluster, i) => renderCard(cluster, i + 1))}
+        </div>
       </div>
     </div>
   );
