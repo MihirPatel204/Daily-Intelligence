@@ -18,7 +18,7 @@ export default function GlobalChat({ apiBaseUrl }: GlobalChatProps) {
   const sessionIdRef = useRef<string>(`global-${Date.now()}`);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 mt-6 pb-8 flex-1 flex flex-col min-h-0 lg:h-full lg:overflow-hidden w-full">
+    <div className="max-w-5xl mx-auto px-4 pb-8 flex-1 flex flex-col min-h-0 lg:h-full lg:overflow-hidden w-full">
       <ChatInterface
         apiUrl={`${apiBaseUrl}/api/chat`}
         sessionId={sessionIdRef.current}
