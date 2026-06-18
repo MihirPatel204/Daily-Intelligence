@@ -1,6 +1,6 @@
 """
 Centralized application configuration using Pydantic Settings.
-Loads environment variables from Backend/.env first, falls back to project root .env.
+Loads environment variables from Backend/.env.
 """
 
 import os
@@ -9,20 +9,14 @@ from typing import Dict
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv
 
-# Try Backend/.env first, then fall back to project root .env
+# Load environment variables from Backend/.env
 _backend_env = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    ".env",
-)
-_root_env = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
     ".env",
 )
 
 if os.path.exists(_backend_env):
     load_dotenv(dotenv_path=_backend_env)
-elif os.path.exists(_root_env):
-    load_dotenv(dotenv_path=_root_env)
 
 logger = logging.getLogger(__name__)
 
