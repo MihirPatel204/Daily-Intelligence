@@ -2,7 +2,7 @@
 
 Welcome to **Daily Intelligence**, a full-stack, AI-powered news aggregator and conversational search application. Daily Intelligence gathers articles from major RSS feeds, clusters them semantically, dynamically determines their prominence (mimicking a traditional physical front-page newspaper layout), and allows users to ask questions grounded directly in the news sources.
 
-It serves as an advanced demonstration of Retrieval-Augmented Generation (RAG), stateful orchestration using **LangGraph**, and a highly interactive, responsive web experience.
+It serves as an advanced demonstration of Retrieval-Augmented Generation (RAG), stateful orchestration using LangChain, LangGraph, and a highly interactive, responsive web experience.
 
 ---
 
@@ -14,7 +14,7 @@ It serves as an advanced demonstration of Retrieval-Augmented Generation (RAG), 
    - Summaries and headlines are synthesized across all source outlets by an LLM to give you a unified overview.
 
 2. **Stateful Ingestion & Synthesis Pipeline**
-   - Implemented as a stateful graph using **LangGraph**.
+   - Implemented as a stateful graph using LangChain, LangGraph.
    - Fetches feed items $\rightarrow$ deduplicates by canonical URLs $\rightarrow$ embeds article title and description $\rightarrow$ clusters articles via vector similarity $\rightarrow$ scores and synthesizes cohesive summaries.
    - Includes **validation and critique loops** (e.g., verifying cluster matches, checking summaries for hallucinations or unsupported claims) that feed back into earlier nodes to self-correct.
 
@@ -101,10 +101,6 @@ graph TD
 ---
 
 ## 📊 Importance Scoring & Sizing
-
-Story cards on the front page are sized dynamically using a weighted importance score:
-
-$$\text{Score} = w_1 \cdot \text{outlet\_count} + w_2 \cdot \text{recency\_decay}(\text{first\_seen}) + w_3 \cdot \text{category\_weight}$$
 
 * **Outlet Count:** The number of independent sources covering the event (the core signal of scale).
 * **Recency Decay:** Exponential decay factor reducing a story's score as it ages, ensuring the front page remains fresh.
