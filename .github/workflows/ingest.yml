@@ -1,0 +1,15 @@
+name: Trigger News Ingestion
+
+on:
+  schedule:
+    # Runs at 12:00 AM, 8:00 AM, and 4:00 PM IST (local time)
+    - cron: '30 2,10,18 * * *'
+  workflow_dispatch: # Allows manual triggering from the GitHub Actions UI
+
+jobs:
+  trigger-ingestion:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Ingestion Request
+        run: |
+          curl -X POST -H "Content-Length: 0" "https://daily-intelligence.onrender.com/api/ingest"
