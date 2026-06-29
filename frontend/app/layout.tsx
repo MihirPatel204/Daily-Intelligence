@@ -24,6 +24,9 @@ export const metadata: Metadata = {
   title: "The Daily Intelligence — AI-Synthesized News & RAG Chat",
   description:
     "Aggregated global and Indian news clustered by events, synthesized by AI with LangChain and LangGraph, and queryable via grounded RAG chat.",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!-- Rounded container with rich background color -->
+  <rect width="32" height="32" rx="6" fill="#1a1814"/>
+  <!-- Folded Newspaper representation -->
+  <!-- Base paper -->
+  <path d="M6 9 C6 7.895 6.895 7 8 7 H24 C25.105 7 26 7.895 26 9 V23 C26 24.105 25.105 25 24 25 H8 C6.895 25 6 24.105 6 23 Z" fill="#faf7f2"/>
+  <!-- Newspaper Masthead line (representing the title) -->
+  <rect x="9" y="10" width="14" height="2" fill="#1a1814" rx="0.5"/>
+  <!-- Thin divider below masthead -->
+  <line x1="9" y1="14" x2="23" y2="14" stroke="#1a1814" stroke-width="0.5"/>
+  <!-- Left column (text lines) -->
+  <rect x="9" y="17" width="6" height="1" fill="#8a8279" rx="0.2"/>
+  <rect x="9" y="19" width="6" height="1" fill="#8a8279" rx="0.2"/>
+  <rect x="9" y="21" width="4" height="1" fill="#8a8279" rx="0.2"/>
+  <!-- Right column (AI red accent graphic + small text) -->
+  <rect x="17" y="17" width="6" height="4" fill="#991b1b" rx="0.5"/>
+  <rect x="17" y="22" width="6" height="1" fill="#8a8279" rx="0.2"/>
+</svg>
