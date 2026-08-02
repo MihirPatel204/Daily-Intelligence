@@ -335,6 +335,9 @@ def cluster_match_node(state: IngestionState) -> dict:
     for cid, headline, category, emb, title in clustered_data:
         if isinstance(emb, str):
             emb = [float(x) for x in emb.strip('[]').split(',')]
+        else:
+            # pgvector returns Vector objects; convert to plain list of floats
+            emb = list(emb)
 
         if cid not in active_clusters:
             active_clusters[cid] = {
@@ -343,7 +346,7 @@ def cluster_match_node(state: IngestionState) -> dict:
                 "embeddings": [],
                 "titles": [],
             }
-        active_clusters[cid]["embeddings"].append(np.array(emb))
+        active_clusters[cid]["embeddings"].append(np.array(emb, dtype=float))
         active_clusters[cid]["titles"].append(title)
 
     # 3. Perform matching and verification completely in memory
@@ -354,7 +357,10 @@ def cluster_match_node(state: IngestionState) -> dict:
     for art_id, title, summary, art_emb, category in unclustered:
         if isinstance(art_emb, str):
             art_emb = [float(x) for x in art_emb.strip('[]').split(',')]
-        art_emb_np = np.array(art_emb)
+        else:
+            # pgvector returns Vector objects; convert to plain list of floats
+            art_emb = list(art_emb)
+        art_emb_np = np.array(art_emb, dtype=float)
 
         matched_cluster_id = None
         best_similarity = 0.0
