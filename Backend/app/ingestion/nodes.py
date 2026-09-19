@@ -24,7 +24,7 @@ from pydantic import BaseModel
 from langchain_core.messages import HumanMessage
 
 from app.config import settings
-from app.db import get_db_connection, return_db_connection
+from app.db import get_db_connection, return_db_connection, parse_embedding
 from app.services.embedding_service import get_embeddings
 from app.services.llm_service import get_llm, clean_llm_content
 from app.ingestion.state import IngestionState, ArticleData, ClusterData
@@ -333,11 +333,7 @@ def cluster_match_node(state: IngestionState) -> dict:
     # 2. Build active clusters representation in memory
     active_clusters: Dict[int, dict] = {}
     for cid, headline, category, emb, title in clustered_data:
-        if isinstance(emb, str):
-            emb = [float(x) for x in emb.strip('[]').split(',')]
-        else:
-            # pgvector returns Vector objects; convert to plain list of floats
-            emb = list(emb)
+        emb_np = parse_embedding(emb)
 
         if cid not in active_clusters:
             active_clusters[cid] = {
@@ -346,7 +342,7 @@ def cluster_match_node(state: IngestionState) -> dict:
                 "embeddings": [],
                 "titles": [],
             }
-        active_clusters[cid]["embeddings"].append(np.array(emb, dtype=float))
+        active_clusters[cid]["embeddings"].append(emb_np)
         active_clusters[cid]["titles"].append(title)
 
     # 3. Perform matching and verification completely in memory
@@ -355,12 +351,7 @@ def cluster_match_node(state: IngestionState) -> dict:
     next_temp_id = -1
 
     for art_id, title, summary, art_emb, category in unclustered:
-        if isinstance(art_emb, str):
-            art_emb = [float(x) for x in art_emb.strip('[]').split(',')]
-        else:
-            # pgvector returns Vector objects; convert to plain list of floats
-            art_emb = list(art_emb)
-        art_emb_np = np.array(art_emb, dtype=float)
+        art_emb_np = parse_embedding(art_emb)
 
         matched_cluster_id = None
         best_similarity = 0.0

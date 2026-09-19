@@ -13,7 +13,7 @@ from typing import Dict, Any
 import numpy as np
 
 from app.config import settings
-from app.db import get_db_connection, return_db_connection
+from app.db import get_db_connection, return_db_connection, parse_embedding
 from app.services.embedding_service import get_embeddings
 from app.services.llm_service import get_llm
 from app.ingestion.nodes import cosine_similarity, ClusterSynthesis
@@ -61,11 +61,7 @@ def merge_similar_clusters() -> Dict[str, Any]:
                 if not embeddings:
                     continue
 
-                emb_arrays = []
-                for (emb,) in embeddings:
-                    if isinstance(emb, str):
-                        emb = [float(x) for x in emb.strip('[]').split(',')]
-                    emb_arrays.append(np.array(emb))
+                emb_arrays = [parse_embedding(emb) for (emb,) in embeddings]
 
                 centroid = np.mean(emb_arrays, axis=0)
                 cluster_centroids[cid] = {

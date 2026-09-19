@@ -7,12 +7,44 @@ Adds cluster_articles join table and chat_messages table per PRD §7.
 
 import logging
 import atexit
+import numpy as np
 import psycopg2
 from psycopg2 import pool as pg_pool
 
 from app.config import settings
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Embedding Serialization Helper
+# ---------------------------------------------------------------------------
+
+
+def parse_embedding(emb) -> np.ndarray:
+    """
+    Safely convert any embedding representation (str, pgvector.Vector, list, np.ndarray)
+    to a 1D float numpy array. Handles pgvector.Vector which does not implement __iter__.
+    """
+    if emb is None:
+        return np.array([], dtype=float)
+    if isinstance(emb, np.ndarray):
+        return emb.astype(float)
+    if hasattr(emb, "to_numpy"):
+        return emb.to_numpy().astype(float)
+    if hasattr(emb, "to_list"):
+        return np.array(emb.to_list(), dtype=float)
+    if hasattr(emb, "tolist"):
+        return np.array(emb.tolist(), dtype=float)
+    if isinstance(emb, str):
+        cleaned = emb.strip("[]")
+        if not cleaned:
+            return np.array([], dtype=float)
+        return np.array([float(x) for x in cleaned.split(",") if x.strip()], dtype=float)
+    try:
+        return np.array(list(emb), dtype=float)
+    except Exception:
+        return np.array(emb, dtype=float)
+
 
 # ---------------------------------------------------------------------------
 # Connection Pool
@@ -30,10 +62,16 @@ def init_pool():
     if not settings.database_url:
         raise ValueError("DATABASE_URL environment variable is not set.")
 
+    # Enable TCP keepalive settings to prevent cloud proxies / hosts
+    # (Render, Neon, Supabase) from dropping idle SSL connections unexpectedly.
     _connection_pool = pg_pool.ThreadedConnectionPool(
         minconn=settings.db_pool_min,
         maxconn=settings.db_pool_max,
         dsn=settings.database_url,
+        keepalives=1,
+        keepalives_idle=30,
+        keepalives_interval=10,
+        keepalives_count=3,
     )
     logger.info(
         f"Connection pool initialized (min={settings.db_pool_min}, max={settings.db_pool_max})."
@@ -53,42 +91,99 @@ def close_pool():
 atexit.register(close_pool)
 
 
-def get_db_connection(register=True):
+def get_db_connection(register=True, max_retries=3):
     """
-    Return a connection from the pool.
+    Return a validated, healthy connection from the pool.
 
     If the pool hasn't been initialized yet (e.g. during init_db before lifespan),
     falls back to a direct psycopg2.connect().
 
+    Validates that the connection is alive and automatically discards stale or
+    dropped SSL connections before returning. Retries up to `max_retries` times.
+
     Args:
         register: Whether to register the pgvector type on this connection.
+        max_retries: Maximum number of attempts to obtain a healthy connection.
     """
     global _connection_pool
 
-    if _connection_pool is not None:
-        conn = _connection_pool.getconn()
-    else:
-        if not settings.database_url:
-            raise ValueError("DATABASE_URL environment variable is not set.")
-        conn = psycopg2.connect(settings.database_url)
+    for attempt in range(max_retries):
+        conn = None
+        try:
+            if _connection_pool is not None:
+                conn = _connection_pool.getconn()
+            else:
+                if not settings.database_url:
+                    raise ValueError("DATABASE_URL environment variable is not set.")
+                conn = psycopg2.connect(
+                    settings.database_url,
+                    keepalives=1,
+                    keepalives_idle=30,
+                    keepalives_interval=10,
+                    keepalives_count=3,
+                )
 
-    # Set statement timeout to prevent locks from hanging
-    with conn.cursor() as cur:
-        cur.execute("SET statement_timeout = 15000;")
+            # Check if connection was already marked closed
+            if conn.closed:
+                raise psycopg2.OperationalError("Database connection retrieved from pool is closed.")
 
-    if register:
-        from pgvector.psycopg2 import register_vector
-        register_vector(conn)
+            # Validate connection health with a lightweight ping and set statement timeout
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1;")
+                cur.execute("SET statement_timeout = 15000;")
 
-    return conn
+            if register:
+                from pgvector.psycopg2 import register_vector
+                register_vector(conn)
+
+            return conn
+
+        except (psycopg2.OperationalError, psycopg2.InterfaceError) as e:
+            logger.warning(
+                f"Stale or broken DB connection detected (attempt {attempt + 1}/{max_retries}): {e}. "
+                "Discarding dead connection and retrying..."
+            )
+            if conn is not None:
+                if _connection_pool is not None:
+                    try:
+                        _connection_pool.putconn(conn, close=True)
+                    except Exception:
+                        try:
+                            conn.close()
+                        except Exception:
+                            pass
+                else:
+                    try:
+                        conn.close()
+                    except Exception:
+                        pass
+
+            if attempt == max_retries - 1:
+                logger.error(
+                    f"Failed to acquire a healthy database connection after {max_retries} attempts: {e}"
+                )
+                raise
 
 
 def return_db_connection(conn):
-    """Return a connection back to the pool."""
+    """Return a connection back to the pool safely."""
     global _connection_pool
+    if conn is None:
+        return
+
     if _connection_pool is not None:
         try:
-            _connection_pool.putconn(conn)
+            if conn.closed:
+                _connection_pool.putconn(conn, close=True)
+            else:
+                # If connection is in an uncommitted error state, roll back before putting back
+                try:
+                    status = conn.get_transaction_status()
+                    if status == psycopg2.extensions.TRANSACTION_STATUS_INERROR:
+                        conn.rollback()
+                except Exception:
+                    pass
+                _connection_pool.putconn(conn)
         except Exception:
             # If putconn fails, close directly
             try:
