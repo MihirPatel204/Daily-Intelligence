@@ -47,7 +47,7 @@ def retrieve_node(state: RAGState) -> dict:
                 # Story-scoped retrieval — every article in the cluster
                 cur.execute(
                     """
-                    SELECT a.title, a.summary, a.url, s.name AS source_name
+                    SELECT a.title, a.summary, a.url, s.name AS source_name, a.raw_text
                     FROM articles a
                     JOIN sources s ON a.source_id = s.id
                     WHERE a.cluster_id = %s
@@ -61,6 +61,7 @@ def retrieve_node(state: RAGState) -> dict:
                         "summary": row[1] or "",
                         "url": row[2],
                         "source_name": row[3],
+                        "raw_text": row[4] or "",
                     })
             else:
                 # Global retrieval — hybrid: article embeddings + cluster summary embeddings
@@ -75,7 +76,7 @@ def retrieve_node(state: RAGState) -> dict:
                 cur.execute(
                     """
                     SELECT a.title, a.summary, a.url, s.name AS source_name,
-                           a.embedding <=> %s::vector AS distance
+                           a.embedding <=> %s::vector AS distance, a.raw_text
                     FROM articles a
                     JOIN sources s ON a.source_id = s.id
                     WHERE a.published_at > %s AND a.embedding IS NOT NULL
@@ -110,6 +111,7 @@ def retrieve_node(state: RAGState) -> dict:
                         "url": row[2],
                         "source_name": row[3],
                         "distance": float(row[4]),
+                        "raw_text": row[5] or "",
                     })
 
                 # Add cluster summaries as additional context (if not already covered)
@@ -122,6 +124,7 @@ def retrieve_node(state: RAGState) -> dict:
                             "url": f"cluster:{row[2]}",
                             "source_name": "Synthesized Report",
                             "distance": float(row[3]),
+                            "raw_text": row[1] or "",
                         })
 
                 # Sort combined results by distance
@@ -204,10 +207,12 @@ async def generate_node(state: RAGState) -> dict:
     # ----- build context block --------------------------------------------------
     context_parts = []
     for doc in documents:
+        body = doc.get("raw_text") or doc.get("summary") or "N/A"
+        body_snippet = body[: settings.max_article_text_length]
         context_parts.append(
             f"Source Publisher: {doc['source_name']}\n"
             f"Title: {doc['title']}\n"
-            f"Summary: {doc['summary'] or 'N/A'}"
+            f"Content: {body_snippet}"
         )
     context = "\n\n---\n\n".join(context_parts)
 

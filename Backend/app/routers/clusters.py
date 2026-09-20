@@ -75,7 +75,7 @@ def get_clusters(date: Optional[str] = None, tz: Optional[str] = None):
 
             cur.execute("""
                 SELECT a.id, a.source_id, s.name AS source_name, a.url, a.title,
-                       a.summary, a.published_at, a.image_url, a.cluster_id, a.created_at
+                       a.summary, a.published_at, a.image_url, a.cluster_id, a.created_at, a.raw_text
                 FROM articles a
                 JOIN sources s ON a.source_id = s.id
                 WHERE a.cluster_id IN %s
@@ -96,6 +96,7 @@ def get_clusters(date: Optional[str] = None, tz: Optional[str] = None):
                         "image_url": art[7],
                         "cluster_id": art[8],
                         "created_at": art[9],
+                        "raw_text": art[10],
                     })
 
         return list(clusters_dict.values())
@@ -137,7 +138,7 @@ def get_cluster(cluster_id: int):
 
             cur.execute("""
                 SELECT a.id, a.source_id, s.name AS source_name, a.url, a.title,
-                       a.summary, a.published_at, a.image_url, a.cluster_id, a.created_at
+                       a.summary, a.published_at, a.image_url, a.cluster_id, a.created_at, a.raw_text
                 FROM articles a
                 JOIN sources s ON a.source_id = s.id
                 WHERE a.cluster_id = %s
@@ -156,6 +157,7 @@ def get_cluster(cluster_id: int):
                     "image_url": art[7],
                     "cluster_id": art[8],
                     "created_at": art[9],
+                    "raw_text": art[10],
                 })
 
             return cluster_data

@@ -16,6 +16,7 @@ class ArticleResponse(BaseModel):
     summary: Optional[str] = None
     published_at: Optional[datetime] = None
     image_url: Optional[str] = None
+    raw_text: Optional[str] = None
     cluster_id: Optional[int] = None
     created_at: datetime
 

@@ -27,6 +27,7 @@ from app.config import settings
 from app.db import get_db_connection, return_db_connection, parse_embedding
 from app.services.embedding_service import get_embeddings
 from app.services.llm_service import get_llm, clean_llm_content
+from app.services.article_extractor import extract_articles_batch
 from app.ingestion.state import IngestionState, ArticleData, ClusterData
 
 logger = logging.getLogger(__name__)
@@ -119,6 +120,8 @@ def fetch_node(state: IngestionState) -> dict:
             )
             sources = cur.fetchall()
 
+        # 1. Collect candidate entries from active sources
+        candidates = []
         for source_id, source_name, rss_url, category in sources:
             logger.info(f"Fetching RSS: {source_name}")
             try:
@@ -146,48 +149,84 @@ def fetch_node(state: IngestionState) -> dict:
                             break
 
                     image_url = extract_image_url(entry)
-
-                    # Insert with deduplication
-                    with conn.cursor() as cur:
-                        cur.execute(
-                            "SELECT 1 FROM articles WHERE url = %s;", (link,)
-                        )
-                        if not cur.fetchone():
-                            try:
-                                cur.execute(
-                                    """
-                                    INSERT INTO articles
-                                        (source_id, url, title, summary, published_at, image_url)
-                                    VALUES (%s, %s, %s, %s, %s, %s)
-                                    RETURNING id;
-                                    """,
-                                    (source_id, link, title, summary, pub_time, image_url),
-                                )
-                                row = cur.fetchone()
-                                if row:
-                                    conn.commit()
-                                    new_articles.append(
-                                        ArticleData(
-                                            id=row[0],
-                                            source_id=source_id,
-                                            source_name=source_name,
-                                            source_category=category,
-                                            url=link,
-                                            title=title,
-                                            summary=summary,
-                                            published_at=pub_time.isoformat(),
-                                            image_url=image_url,
-                                        )
-                                    )
-                            except Exception as insert_err:
-                                logger.error(
-                                    f"Failed to insert article {link}: {insert_err}"
-                                )
-                                conn.rollback()
+                    candidates.append({
+                        "source_id": source_id,
+                        "source_name": source_name,
+                        "category": category,
+                        "url": link,
+                        "title": title,
+                        "summary": summary,
+                        "published_at": pub_time,
+                        "image_url": image_url,
+                    })
             except Exception as e:
                 error_msg = f"Error parsing feed {source_name}: {e}"
                 logger.error(error_msg)
                 errors.append(error_msg)
+
+        # 2. Filter candidates against existing articles in DB
+        new_candidates = []
+        if candidates:
+            with conn.cursor() as cur:
+                all_urls = [c["url"] for c in candidates]
+                cur.execute(
+                    "SELECT url FROM articles WHERE url = ANY(%s);", (all_urls,)
+                )
+                existing_urls = {row[0] for row in cur.fetchall()}
+                new_candidates = [c for c in candidates if c["url"] not in existing_urls]
+
+        # 3. Concurrently extract full text for new articles
+        if new_candidates:
+            urls_to_extract = [c["url"] for c in new_candidates]
+            extracted_texts = extract_articles_batch(urls_to_extract)
+
+            for cand in new_candidates:
+                link = cand["url"]
+                full_text = extracted_texts.get(link)
+                # Fallback to summary if full text extraction is unavailable/empty
+                raw_text = full_text if full_text else cand["summary"]
+
+                with conn.cursor() as cur:
+                    try:
+                        cur.execute(
+                            """
+                            INSERT INTO articles
+                                (source_id, url, title, summary, published_at, image_url, raw_text)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                            RETURNING id;
+                            """,
+                            (
+                                cand["source_id"],
+                                link,
+                                cand["title"],
+                                cand["summary"],
+                                cand["published_at"],
+                                cand["image_url"],
+                                raw_text,
+                            ),
+                        )
+                        row = cur.fetchone()
+                        if row:
+                            conn.commit()
+                            new_articles.append(
+                                ArticleData(
+                                    id=row[0],
+                                    source_id=cand["source_id"],
+                                    source_name=cand["source_name"],
+                                    source_category=cand["category"],
+                                    url=link,
+                                    title=cand["title"],
+                                    summary=cand["summary"],
+                                    published_at=cand["published_at"].isoformat(),
+                                    image_url=cand["image_url"],
+                                    raw_text=raw_text,
+                                )
+                            )
+                    except Exception as insert_err:
+                        logger.error(
+                            f"Failed to insert article {link}: {insert_err}"
+                        )
+                        conn.rollback()
 
     except Exception as e:
         error_msg = f"Database error during RSS fetch: {e}"
@@ -222,7 +261,7 @@ def embed_node(state: IngestionState) -> dict:
         with conn.cursor() as cur:
             # Limit to 15 articles per run to stay well within Gemini API rate limits
             cur.execute(
-                "SELECT id, title, summary FROM articles WHERE embedding IS NULL LIMIT 15;"
+                "SELECT id, title, summary, raw_text FROM articles WHERE embedding IS NULL LIMIT 15;"
             )
             unembedded = cur.fetchall()
 
@@ -236,8 +275,11 @@ def embed_node(state: IngestionState) -> dict:
             # Process in batches
             for i in range(0, len(unembedded), batch_size):
                 batch = unembedded[i : i + batch_size]
-                texts = [f"{title}. {summary or ''}" for _, title, summary in batch]
-                ids = [art_id for art_id, _, _ in batch]
+                texts = []
+                for _, title, summary, raw_text in batch:
+                    content_snippet = (raw_text[:600] if raw_text else summary) or ""
+                    texts.append(f"{title}. {content_snippet}")
+                ids = [art_id for art_id, _, _, _ in batch]
 
                 try:
                     vectors = embeddings_model.embed_documents(texts)
@@ -646,7 +688,7 @@ def summarize_node(state: IngestionState) -> dict:
         try:
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT a.title, a.summary, s.name, a.published_at
+                    SELECT a.title, a.summary, s.name, a.published_at, a.raw_text
                     FROM articles a
                     JOIN sources s ON a.source_id = s.id
                     WHERE a.cluster_id = %s
@@ -669,11 +711,13 @@ def summarize_node(state: IngestionState) -> dict:
 
         if llm and articles:
             articles_context = ""
-            for idx, (title, summary, s_name, pub_at) in enumerate(articles):
+            for idx, (title, summary, s_name, pub_at, raw_text) in enumerate(articles):
+                # Use rich body snippet (up to 1200 chars) if available, fallback to RSS summary
+                detail_body = (raw_text[:1200] + "...") if raw_text else (summary or 'N/A')
                 articles_context += (
                     f"Source {idx + 1}: {s_name}\n"
                     f"Headline: {title}\n"
-                    f"Summary: {summary or 'N/A'}\n\n"
+                    f"Key Details: {detail_body}\n\n"
                 )
 
             # Include critique feedback if this is a retry

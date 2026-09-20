@@ -13,6 +13,8 @@ interface Article {
   title: string;
   url: string;
   published_at: string;
+  summary?: string;
+  raw_text?: string;
 }
 
 interface Cluster {

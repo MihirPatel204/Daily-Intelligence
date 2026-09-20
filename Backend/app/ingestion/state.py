@@ -19,6 +19,7 @@ class ArticleData(TypedDict, total=False):
     summary: str
     published_at: str
     image_url: Optional[str]
+    raw_text: Optional[str]
     embedding: Optional[List[float]]
     cluster_id: Optional[int]
 

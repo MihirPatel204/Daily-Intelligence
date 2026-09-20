@@ -76,6 +76,12 @@ class Settings(BaseSettings):
     # Timezone for edition date grouping (e.g. Asia/Kolkata for IST)
     app_timezone: str = "Asia/Kolkata"
 
+    # Full article extraction
+    enable_article_extraction: bool = True
+    article_fetch_timeout_sec: int = 8
+    article_max_workers: int = 5
+    max_article_text_length: int = 3000
+
     class Config:
         extra = "ignore"
 
