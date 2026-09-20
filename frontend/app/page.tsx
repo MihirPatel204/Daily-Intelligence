@@ -8,11 +8,33 @@ import NewspaperGrid from "../components/NewspaperGrid";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+const getLocalDateString = (d: Date = new Date()): string => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const parseLocalDate = (dateStr: string): Date => {
+  if (!dateStr) return new Date();
+  const parts = dateStr.split("-").map(Number);
+  if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+  return new Date(dateStr);
+};
+
+const getUserTimeZone = (): string => {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata";
+  } catch {
+    return "Asia/Kolkata";
+  }
+};
+
 export default function Home() {
   const router = useRouter();
-  const [editionDate, setEditionDate] = useState(() => {
-    return new Date().toISOString().split("T")[0];
-  });
+  const [editionDate, setEditionDate] = useState(() => getLocalDateString());
 
   const [clusters, setClusters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -22,7 +44,10 @@ export default function Home() {
   const fetchClusters = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/clusters?date=${editionDate}`);
+      const tz = getUserTimeZone();
+      const res = await fetch(
+        `${API_BASE_URL}/api/clusters?date=${editionDate}&tz=${encodeURIComponent(tz)}`
+      );
       if (!res.ok) throw new Error("Failed to fetch stories");
       const data = await res.json();
       setClusters(data);
@@ -39,8 +64,9 @@ export default function Home() {
 
     // Auto-refresh the edition content from the backend every 30 seconds
     const interval = setInterval(() => {
+      const tz = getUserTimeZone();
       // Avoid loading state overlay flash during auto-refresh
-      fetch(`${API_BASE_URL}/api/clusters?date=${editionDate}`)
+      fetch(`${API_BASE_URL}/api/clusters?date=${editionDate}&tz=${encodeURIComponent(tz)}`)
         .then((res) => {
           if (res.ok) return res.json();
           throw new Error("Polling failed");
@@ -79,7 +105,7 @@ export default function Home() {
     <div className="flex flex-col min-h-screen">
       {/* Top Navigation */}
       <Navbar
-        dateStr={new Date(editionDate).toLocaleDateString("en-US", {
+        dateStr={parseLocalDate(editionDate).toLocaleDateString("en-US", {
           weekday: "short",
           month: "short",
           day: "numeric",
@@ -108,7 +134,7 @@ export default function Home() {
           clusters={clusters}
           onSelectCluster={(id) => router.push(`/chat/${id}`)}
           loading={loading}
-          onResetDate={() => setEditionDate(new Date().toISOString().split("T")[0])}
+          onResetDate={() => setEditionDate(getLocalDateString())}
         />
       </main>
 

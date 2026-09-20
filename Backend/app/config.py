@@ -73,6 +73,9 @@ class Settings(BaseSettings):
     enable_background_ingestion: bool = False
     background_ingestion_interval_hours: float = 12.0
 
+    # Timezone for edition date grouping (e.g. Asia/Kolkata for IST)
+    app_timezone: str = "Asia/Kolkata"
+
     class Config:
         extra = "ignore"
 
