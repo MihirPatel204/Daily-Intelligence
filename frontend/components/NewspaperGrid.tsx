@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import NewsImage from "./NewsImage";
 
 interface Article {
   id: number;
@@ -10,6 +11,7 @@ interface Article {
   published_at: string;
   summary?: string;
   raw_text?: string;
+  image_url?: string | null;
 }
 
 interface Cluster {
@@ -22,7 +24,20 @@ interface Cluster {
   outlet_count: number;
   first_seen_at: string;
   last_updated_at: string;
+  image_url?: string | null;
   articles: Article[];
+}
+
+function getClusterPhoto(cluster: Cluster): { url: string; credit?: string } | null {
+  if (cluster.image_url) {
+    const art = cluster.articles.find((a) => a.image_url === cluster.image_url);
+    return { url: cluster.image_url, credit: art?.source_name };
+  }
+  const artWithImg = cluster.articles.find((a) => Boolean(a.image_url));
+  if (artWithImg && artWithImg.image_url) {
+    return { url: artWithImg.image_url, credit: artWithImg.source_name };
+  }
+  return null;
 }
 
 interface NewspaperGridProps {
@@ -135,6 +150,7 @@ export default function NewspaperGrid({ clusters, onSelectCluster, loading, onRe
 
   const renderCard = (cluster: Cluster, index: number) => {
     const { paddingClass, titleClass, summaryClass } = getCardClasses(cluster.size_tier);
+    const photo = getClusterPhoto(cluster);
 
     return (
       <div
@@ -167,6 +183,18 @@ export default function NewspaperGrid({ clusters, onSelectCluster, loading, onRe
           <h4 className={`text-[var(--foreground)] group-hover:text-[var(--accent)] transition-colors duration-200 mb-3 ${titleClass}`}>
             {cluster.headline}
           </h4>
+
+          {/* Dispatch Photo (Rendered only if available; falls back to showing nothing) */}
+          {photo && cluster.size_tier !== "brief" && (
+            <div className="mb-3.5 rounded-[var(--radius-sm)] overflow-hidden">
+              <NewsImage
+                src={photo.url}
+                alt={cluster.headline}
+                credit={photo.credit}
+                aspectRatio={cluster.size_tier === "lead" ? "wide" : "video"}
+              />
+            </div>
+          )}
 
           {/* Summary */}
           <p className={`text-[var(--text-secondary)] mb-4 text-justify ${summaryClass}`} style={{ fontFamily: "var(--font-body)" }}>

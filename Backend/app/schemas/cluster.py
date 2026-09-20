@@ -36,6 +36,7 @@ class ClusterResponse(BaseModel):
     outlet_count: int
     first_seen_at: datetime
     last_updated_at: datetime
+    image_url: Optional[str] = None
     articles: List[ArticleResponse] = []
 
     class Config:

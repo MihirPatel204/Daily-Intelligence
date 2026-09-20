@@ -99,6 +99,9 @@ def get_clusters(date: Optional[str] = None, tz: Optional[str] = None):
                         "raw_text": art[10],
                     })
 
+            for c in clusters_dict.values():
+                c["image_url"] = next((art["image_url"] for art in c["articles"] if art.get("image_url")), None)
+
         return list(clusters_dict.values())
     except Exception as e:
         logger.error(f"Error fetching clusters: {e}")
@@ -133,6 +136,7 @@ def get_cluster(cluster_id: int):
                 "outlet_count": c[6],
                 "first_seen_at": c[7],
                 "last_updated_at": c[8],
+                "image_url": None,
                 "articles": [],
             }
 
@@ -159,6 +163,8 @@ def get_cluster(cluster_id: int):
                     "created_at": art[9],
                     "raw_text": art[10],
                 })
+
+            cluster_data["image_url"] = next((art["image_url"] for art in cluster_data["articles"] if art.get("image_url")), None)
 
             return cluster_data
     except HTTPException:

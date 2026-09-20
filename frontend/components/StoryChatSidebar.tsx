@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { streamChat, type Citation } from "../lib/streamChat";
+import NewsImage from "./NewsImage";
 
 interface Article {
   id: number;
@@ -13,6 +14,7 @@ interface Article {
   published_at: string;
   summary?: string;
   raw_text?: string;
+  image_url?: string | null;
 }
 
 interface Cluster {
@@ -25,6 +27,7 @@ interface Cluster {
   outlet_count: number;
   first_seen_at: string;
   last_updated_at: string;
+  image_url?: string | null;
   articles: Article[];
 }
 
@@ -209,10 +212,25 @@ export default function StoryChatSidebar({
           <div className="flex-1 overflow-hidden flex flex-col">
 
             {/* Story Context */}
-            <div className="p-5 bg-white border-b border-[var(--border-light)] overflow-y-auto max-h-[28%] shadow-[var(--shadow-xs)]">
+            <div className="p-5 bg-white border-b border-[var(--border-light)] overflow-y-auto max-h-[38%] shadow-[var(--shadow-xs)]">
               <h3 className="font-serif font-black text-lg text-[var(--foreground)] leading-tight mb-2">
                 {cluster?.headline}
               </h3>
+              {(() => {
+                const leadPhoto = cluster?.image_url || cluster?.articles.find((a) => Boolean(a.image_url))?.image_url;
+                const leadCredit = cluster?.articles.find((a) => a.image_url === leadPhoto)?.source_name;
+                if (!leadPhoto) return null;
+                return (
+                  <div className="mb-2.5 rounded-[var(--radius-sm)] overflow-hidden">
+                    <NewsImage
+                      src={leadPhoto}
+                      alt={cluster?.headline}
+                      credit={leadCredit}
+                      aspectRatio="video"
+                    />
+                  </div>
+                );
+              })()}
               <p className="text-xs italic text-[var(--text-secondary)] leading-relaxed bg-[var(--background)] p-3 rounded-[var(--radius-sm)] border border-dashed border-[var(--border)]" style={{ fontFamily: "var(--font-body)" }}>
                 &ldquo;{cluster?.synthesized_summary}&rdquo;
               </p>
@@ -294,22 +312,33 @@ export default function StoryChatSidebar({
               <span className="font-extrabold text-[10px] tracking-wider text-[var(--text-muted)] block mb-2 uppercase">
                 Contributing Feeds ({cluster?.articles.length})
               </span>
-              <div className="flex flex-col gap-1.5 max-h-20 overflow-y-auto pr-2">
+              <div className="flex flex-col gap-1.5 max-h-24 overflow-y-auto pr-2">
                 {cluster?.articles.map((art) => (
                   <a
                     key={art.id}
                     href={art.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-start gap-1.5 text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors leading-tight"
+                    className="flex items-center gap-2 p-1 hover:bg-white rounded transition-colors text-[var(--text-secondary)] hover:text-[var(--accent)] leading-tight group"
                     style={{ fontFamily: "var(--font-body)" }}
                   >
-                    <span className="font-sans font-bold text-[9px] bg-white border border-[var(--border)] text-[var(--text-muted)] px-1 rounded-[2px] uppercase flex-shrink-0">
-                      {art.source_name}
-                    </span>
-                    <span className="underline hover:no-underline line-clamp-1 text-[11px]">
-                      {art.title}
-                    </span>
+                    {art.image_url && (
+                      <div className="w-8 h-8 flex-shrink-0 rounded-[2px] overflow-hidden border border-[var(--border-light)]">
+                        <NewsImage
+                          src={art.image_url}
+                          alt={art.title}
+                          aspectRatio="square"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <span className="font-sans font-bold text-[8px] bg-white border border-[var(--border)] text-[var(--text-muted)] px-1 rounded-[2px] uppercase inline-block mr-1.5">
+                        {art.source_name}
+                      </span>
+                      <span className="underline hover:no-underline line-clamp-1 text-[11px]">
+                        {art.title}
+                      </span>
+                    </div>
                   </a>
                 ))}
               </div>

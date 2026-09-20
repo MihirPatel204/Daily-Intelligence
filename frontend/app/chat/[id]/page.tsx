@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "../../../components/Navbar";
 import ChatInterface, { type Message } from "../../../components/ChatInterface";
+import NewsImage from "../../../components/NewsImage";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -15,6 +16,7 @@ interface Article {
   published_at: string;
   summary?: string;
   raw_text?: string;
+  image_url?: string | null;
 }
 
 interface Cluster {
@@ -27,6 +29,7 @@ interface Cluster {
   outlet_count: number;
   first_seen_at: string;
   last_updated_at: string;
+  image_url?: string | null;
   articles: Article[];
 }
 
@@ -139,6 +142,21 @@ export default function StoryChatPage() {
                 <h2 className="font-serif font-black text-lg text-[var(--foreground)] leading-tight">
                   {cluster?.headline}
                 </h2>
+                {(() => {
+                  const leadPhoto = cluster?.image_url || cluster?.articles.find((a) => Boolean(a.image_url))?.image_url;
+                  const leadCredit = cluster?.articles.find((a) => a.image_url === leadPhoto)?.source_name;
+                  if (!leadPhoto) return null;
+                  return (
+                    <div className="rounded-[var(--radius-sm)] overflow-hidden">
+                      <NewsImage
+                        src={leadPhoto}
+                        alt={cluster?.headline}
+                        credit={leadCredit}
+                        aspectRatio="video"
+                      />
+                    </div>
+                  );
+                })()}
                 <p
                   className="text-xs italic text-[var(--text-secondary)] leading-relaxed bg-[var(--background)] p-3 rounded-lg border border-dashed border-[var(--border)]"
                   style={{ fontFamily: "var(--font-body)" }}
@@ -159,15 +177,26 @@ export default function StoryChatPage() {
                       href={art.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex flex-col p-2.5 hover:bg-[var(--background-alt)] rounded-lg transition-colors border border-transparent hover:border-[var(--border-light)] leading-snug group"
+                      className="flex items-start gap-2.5 p-2 hover:bg-[var(--background-alt)] rounded-lg transition-colors border border-transparent hover:border-[var(--border-light)] leading-snug group"
                       style={{ fontFamily: "var(--font-body)" }}
                     >
-                      <span className="font-sans font-bold text-[8px] bg-[var(--background-alt)] border border-[var(--border-light)] text-[var(--text-muted)] px-1 py-0.5 rounded-[2px] uppercase w-fit mb-1.5 transition-colors group-hover:bg-white">
-                        {art.source_name}
-                      </span>
-                      <span className="text-[11.5px] text-[var(--text-secondary)] group-hover:text-[var(--foreground)] underline group-hover:no-underline line-clamp-2">
-                        {art.title}
-                      </span>
+                      {art.image_url && (
+                        <div className="w-11 h-11 flex-shrink-0 rounded-[var(--radius-sm)] overflow-hidden border border-[var(--border-light)]">
+                          <NewsImage
+                            src={art.image_url}
+                            alt={art.title}
+                            aspectRatio="square"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <span className="font-sans font-bold text-[8px] bg-[var(--background-alt)] border border-[var(--border-light)] text-[var(--text-muted)] px-1 py-0.5 rounded-[2px] uppercase w-fit mb-1 block transition-colors group-hover:bg-white">
+                          {art.source_name}
+                        </span>
+                        <span className="text-[11.5px] text-[var(--text-secondary)] group-hover:text-[var(--foreground)] underline group-hover:no-underline line-clamp-2">
+                          {art.title}
+                        </span>
+                      </div>
                     </a>
                   ))}
                 </div>
