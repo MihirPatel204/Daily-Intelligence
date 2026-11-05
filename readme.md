@@ -37,7 +37,7 @@ graph TD
     Ingest -->|Embeddings| GeminiEmbed[Gemini embedding-2]
     GeminiEmbed -->|Store| DB[(PostgreSQL + pgvector)]
     Ingest -->|Deduplication & Clustering| DB[(PostgreSQL + pgvector)]
-    Ingest -->|Verify & Summarize| LLM[Gemini 3.1 Flash Lite]
+    Ingest -->|Verify & Summarize| LLM[Gemini 3.5 Flash Lite]
     LLM -->|Save Summaries & Scores| DB
 
     %% Web Application
@@ -65,9 +65,10 @@ graph TD
 * **Database & Search:**
   - **Database:** PostgreSQL (Hosted on Neon)
   - **Vector Search:** `pgvector` extension (handling dense vector embeddings and cosine similarity searches)
-* **AI Engine:**
-  - **LLM:** Google Gemini (`gemini-3.1-flash-lite`)
+* **AI Engine & Evaluation:**
+  - **LLM:** Google Gemini (`gemini-3.5-flash-lite`)
   - **Embeddings:** Google Gemini Embedding (`models/gemini-embedding-2`)
+  - **Evals Framework:** DeepEval & Pytest (evaluating Answer Relevancy, Faithfulness, Contextual Relevancy, Hallucination, Bias, & Toxicity)
 
 ---
 
@@ -86,6 +87,13 @@ graph TD
 │   │   ├── routers/            # FastAPI Endpoint routes (clusters, chat, ingest)
 │   │   ├── schemas/            # Request/Response schemas
 │   │   └── services/           # DB operations, Embedding & LLM abstraction
+│   ├── evals/                  # DeepEval RAG evaluations & datasets
+│   │   ├── datasets/           # Ground-truth golden test datasets (JSON)
+│   │   ├── conftest.py         # Gemini judge model configuration & fixtures
+│   │   ├── helpers.py          # Synchronous RAG runner for evals
+│   │   ├── test_rag_metrics.py # Core RAG quality tests (Relevancy, Faithfulness, etc.)
+│   │   ├── test_safety.py      # Bias & Toxicity safety checks
+│   │   └── test_e2e_pipeline.py# Live end-to-end retrieve → grade → generate tests
 │   ├── requirements.txt        # Backend dependencies
 │   └── .env                    # Local environment variables
 │
@@ -139,7 +147,7 @@ If you are using Neon, it is enabled by default. The database initialization scr
    ```env
    DATABASE_URL=postgresql://<user>:<password>@<host>/<dbname>?sslmode=require
    GEMINI_API_KEY=your_gemini_api_key
-   GEMINI_MODEL=gemini-3.1-flash-lite
+   GEMINI_MODEL=gemini-3.5-flash-lite
    ENABLE_BACKGROUND_INGESTION=False  # Set to True to poll in the background
    BACKGROUND_INGESTION_INTERVAL_HOURS=12.0
    ```
@@ -156,6 +164,49 @@ python -m app.ingest
 Alternatively, hit the local API endpoint (e.g. via Postman or browser):
 * **Trigger async:** `POST http://localhost:8000/api/ingest`
 * **Trigger sync & debug:** `GET http://localhost:8000/api/ingest/debug`
+
+---
+
+### 🧪 Running LLM Evaluations (DeepEval)
+
+The project includes an LLM evaluation test suite using **DeepEval** with Google Gemini configured as the judge model (`gemini-3.5-flash-lite`).
+
+Navigate to `Backend`:
+```bash
+cd Backend
+```
+
+#### 1. Run Core RAG Metrics (Isolated with Golden Dataset)
+Evaluates **Answer Relevancy**, **Faithfulness**, **Contextual Relevancy**, and **Hallucination**:
+```bash
+# Run all core RAG tests sequentially (recommended to respect Gemini API rate limits)
+python -m pytest evals/test_rag_metrics.py -n 1 -v
+
+# Run a specific metric
+python -m pytest evals/test_rag_metrics.py -k "test_answer_relevancy" -v
+python -m pytest evals/test_rag_metrics.py -k "test_faithfulness" -v
+
+# Run tests for a specific topic (e.g., Kerala or Midterm)
+python -m pytest evals/test_rag_metrics.py -k "kerala" -v
+```
+
+#### 2. Run Safety Checks (Bias & Toxicity)
+```bash
+python -m pytest evals/test_safety.py -v
+```
+
+#### 3. Run Live End-to-End Pipeline Tests
+Tests the full `retrieve_node` $\rightarrow$ `grade_node` $\rightarrow$ `generate_node` workflow against real ingested articles in your Neon PostgreSQL database:
+```bash
+python -m pytest evals/test_e2e_pipeline.py -v
+```
+
+#### 4. Generate a Local HTML Report (Visual Dashboard)
+To inspect scores, explanations, and metrics visually in your browser without external accounts:
+```bash
+python -m pytest evals/test_rag_metrics.py -k "kerala" --html=report.html --self-contained-html
+```
+Open `report.html` in your web browser.
 
 ---
 
