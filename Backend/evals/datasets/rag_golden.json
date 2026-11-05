@@ -1,0 +1,83 @@
+[
+  {
+    "id": "geopolitics-india-pakistan",
+    "input": "What are the latest developments in the India-Pakistan situation?",
+    "expected_output": "According to reports, recent developments include diplomatic talks and military positioning along the border. BBC reports that back-channel diplomatic talks were held on Tuesday, while NDTV notes increased military deployments along the Line of Control.",
+    "context": [
+      "Source Publisher: BBC\nTitle: India-Pakistan Back-Channel Talks Resume\nContent: India and Pakistan held back-channel diplomatic talks on Tuesday, with both sides agreeing to de-escalate tensions along the Line of Control. Senior officials confirmed that the discussions focused on cross-border security and trade resumption.",
+      "Source Publisher: NDTV\nTitle: Military Deployments Increase Along LoC\nContent: Military deployments have increased along the Line of Control over the past week, according to defense ministry sources. The Indian Army has moved additional battalions to forward positions as a precautionary measure.",
+      "Source Publisher: Reuters\nTitle: International Community Calls for Restraint\nContent: The United Nations Secretary-General called on both India and Pakistan to exercise maximum restraint and pursue diplomatic channels. The US State Department echoed the sentiment, urging both nations to engage in dialogue."
+    ]
+  },
+  {
+    "id": "tech-layoffs",
+    "input": "Summarize the latest tech layoffs",
+    "expected_output": "Multiple tech companies have announced layoffs this week. According to Reuters, Google laid off 200 employees in its cloud division. TechCrunch reports that Microsoft also confirmed workforce reductions in its AI research division.",
+    "context": [
+      "Source Publisher: Reuters\nTitle: Google Lays Off 200 Cloud Employees\nContent: Google has laid off approximately 200 employees from its cloud computing division as part of a broader restructuring effort. The company cited shifting priorities toward AI-first products as the reason for the workforce reduction.",
+      "Source Publisher: TechCrunch\nTitle: Microsoft Confirms AI Division Layoffs\nContent: Following Google's announcement, Microsoft also confirmed workforce reductions in its AI research division. Approximately 150 roles are being eliminated, though the company emphasized it is simultaneously hiring in other AI areas."
+    ]
+  },
+  {
+    "id": "sports-multi-source",
+    "input": "What happened in the cricket World Cup final?",
+    "expected_output": "India won the Cricket World Cup final against Australia. ESPN Cricinfo reports the final score was 287-4, while Times of India highlights Virat Kohli's century as the decisive moment.",
+    "context": [
+      "Source Publisher: ESPN Cricinfo\nTitle: India Clinch World Cup in Thrilling Final\nContent: India defeated Australia by 6 wickets in the Cricket World Cup final at the Narendra Modi Stadium. Chasing 242, India reached the target with 42 balls to spare. The final score was 287-4 with Virat Kohli scoring an unbeaten 103.",
+      "Source Publisher: Times of India\nTitle: Kohli's Century Seals World Cup Glory\nContent: Virat Kohli played a match-defining innings of 103 not out to guide India to their third Cricket World Cup title. The veteran batter's 30th ODI century came at the most crucial moment of his career.",
+      "Source Publisher: The Hindu\nTitle: Celebrations Erupt Across India After WC Win\nContent: Celebrations erupted across major Indian cities after India's World Cup victory. Fireworks and processions were seen in Mumbai, Delhi, Kolkata, and Chennai as fans poured onto the streets."
+    ]
+  },
+  {
+    "id": "vague-broad-question",
+    "input": "What's happening in the news today?",
+    "expected_output": "Based on the available reports, key developments today include: ongoing diplomatic talks between India and Pakistan (BBC), tech layoffs at major companies (Reuters), and India's Cricket World Cup victory (ESPN Cricinfo).",
+    "context": [
+      "Source Publisher: BBC\nTitle: India-Pakistan Diplomatic Talks Continue\nContent: Diplomatic negotiations between India and Pakistan continued for a second day with both sides expressing cautious optimism about a potential ceasefire agreement.",
+      "Source Publisher: Reuters\nTitle: Tech Sector Faces New Wave of Layoffs\nContent: The technology sector is experiencing another wave of layoffs as companies restructure operations around AI capabilities. Over 1,000 jobs have been cut across major firms this week.",
+      "Source Publisher: ESPN Cricinfo\nTitle: World Cup Final Preview\nContent: The Cricket World Cup final between India and Australia is set for Saturday at the Narendra Modi Stadium in Ahmedabad, with both teams looking to claim the trophy."
+    ]
+  },
+  {
+    "id": "no-context-fallback",
+    "input": "Tell me about the Mars colonization timeline",
+    "expected_output": "I couldn't find any relevant articles to answer your question. Please try rephrasing or asking about a different topic.",
+    "context": []
+  },
+  {
+    "id": "politically-sensitive",
+    "input": "What are the different political reactions to the new education policy?",
+    "expected_output": "According to available reports, the new education policy has received mixed reactions. The Hindu reports that the ruling party praised the policy's focus on vocational training, while India Today notes that opposition parties have raised concerns about implementation funding.",
+    "context": [
+      "Source Publisher: The Hindu\nTitle: Ruling Party Defends New Education Policy\nContent: The ruling party defended the new National Education Policy, highlighting its emphasis on vocational training and skill development. Education Minister stated that the policy would transform India's education landscape by 2030.",
+      "Source Publisher: India Today\nTitle: Opposition Raises Funding Concerns Over Education Policy\nContent: Opposition parties have raised concerns about the implementation of the new education policy, questioning whether adequate funding has been allocated. Several state governments run by opposition parties have expressed reluctance to adopt the policy without additional central funding.",
+      "Source Publisher: Hindustan Times\nTitle: Education Experts Weigh In On New Policy\nContent: Education experts have offered a mixed assessment of the new policy. While praising the focus on critical thinking and reduced rote learning, some academics worry about the feasibility of implementing such sweeping changes across India's diverse education system."
+    ]
+  },
+  {
+    "id": "us-midterm-elections-2026",
+    "input": "What were the key results and reactions from the 2026 US midterm elections?",
+    "expected_output": "According to reports by The Hindu, the Democratic Party scored a major victory in the 2026 US midterm elections, winning majorities in both the House and Senate by flipping seven Senate seats, 22 House seats, and four Governor seats. Democrats vowed to rein in President Donald Trump, who made his first post-election appearance highlighting the White House ballroom.",
+    "context": [
+      "Source Publisher: The Hindu\nTitle: Younger, dynamic Democratic leaders dealt a decisive blow to Trumpism\nContent: The U.S. mid-term elections have delivered a damning mandate against Trumpism. After Richard Nixon and Watergate, Donald Trump is the first to accomplish a Republican rout of this scale and scope. The Democratic Party flipped seven Senate seats, 22 House seats, and four Governor seats, and has won a majority in both House and Senate. Trump’s wars — the Iran war and the tariff war — resulting in economic pressures were cited as major factors.",
+      "Source Publisher: The Hindu\nTitle: U.S. midterm elections 2026 LIVE: Democrats vow to rein in Trump as he shows off White House ballroom\nContent: Democrats vowed to use their resounding midterm victory to rein in President Donald Trump, setting up two years of possible deadlock in Washington, as Mr. Trump spent his first post-election appearance showing off his under-construction White House ballroom. It will be the first time that Mr. Trump, a Republican, faces an opposition-controlled Congress during this term."
+    ]
+  },
+  {
+    "id": "kerala-poverty-un-recognition",
+    "input": "What recognition did Kerala receive from the United Nations regarding poverty eradication?",
+    "expected_output": "According to The Hindu, the UN High Commissioner for Human Rights (OHCHR) released a special video celebrating Kerala's milestone in declaring itself free from extreme poverty. The video was released at the UN Headquarters in New York to mark the 40th anniversary of the UN Declaration on the Right to Development.",
+    "context": [
+      "Source Publisher: The Hindu\nTitle: UN Human Rights Commissioner releases video celebrating Keralam’s achievement in eliminating extreme poverty\nContent: The United Nations High Commissioner for Human Rights (OHCHR) has released a video celebrating Keralam declaring itself free from extreme poverty. The short animated video made by the OHCHR office and made available on its YouTube channel was formally released at the UN Headquarters in New York on Tuesday. The video is part of the observation of the 40th anniversary of the UN Declaration on the Right to Development."
+    ]
+  },
+  {
+    "id": "kashmir-malshahi-masjid-conservation",
+    "input": "Why are conservationists concerned about the restoration of Kashmir's Malshahi Masjid?",
+    "expected_output": "According to The Hindu, conservationists have warned that restoring the 17th-century Malshahi Masjid in Ganderbal could tamper with the historical structure and potentially erase a Mughal-era architectural layer, despite restoration work being initiated by J&K Chief Minister Omar Abdullah.",
+    "context": [
+      "Source Publisher: The Hindu\nTitle: Restoration of Kashmir’s Malshahi Masjid could erase a Mughal-era layer, warn conservationists\nContent: Unattended for centuries, the 17th Century mosque, Malshahi Masjid, in central Kashmir’s Ganderbal district is likely to offer a rare peep into the past with its conservation and restoration. However, conservationists warn against tampering with the structure, which could erase a layer from the Mughal era in Kashmir. J&K Chief Minister Omar Abdullah recently laid the foundation stone for the conservation initiative."
+    ]
+  }
+]
+

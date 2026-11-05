@@ -29,3 +29,8 @@ Thumbs.db
 *.egg-info/
 dist/
 build/
+
+.deepeval/
+.pytest_cache/
+eval_report.html
+report.html

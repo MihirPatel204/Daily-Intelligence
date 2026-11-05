@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     # Core credentials
     database_url: str = ""
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-3.1-flash-lite"
+    gemini_model: str = "gemini-3.5-flash-lite"
 
     # Embedding model
     embedding_model: str = "models/gemini-embedding-2"
@@ -47,8 +47,8 @@ class Settings(BaseSettings):
     embedding_batch_size: int = 20
 
     # RAG parameters
-    rag_top_k: int = 6
-    rag_time_window_days: int = 7
+    rag_top_k: int = 7
+    rag_time_window_days: int = 30
 
     # Clustering thresholds
     cluster_similarity_threshold: float = 0.82
